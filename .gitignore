@@ -1,0 +1,5 @@
+/build
+/src/uri/uri.cc
+/bin
+/lib
+.vscode
