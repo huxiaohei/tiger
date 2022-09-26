@@ -1,23 +1,19 @@
 /*****************************************************************
  * Description
  * Email huxiaoheigame@gmail.com
- * Created on 2022/09/21
+ * Created on 2022/09/22
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_UTIL_H__
-#define __TIGER_UTIL_H__
+#ifndef __TIGER_CONST_H__
+#define __TIGER_CONST_H__
 
-#include <chrono>
-#include <iostream>
+#include <string>
 
 namespace tiger {
 
-bool IsValidName(const std::string &name);
+const std::string SYSTEM_LOG = "SYSTEM";
 
-time_t Millisecond();
-time_t Second();
-
-}  // namespace tiger
+}
 
 #endif

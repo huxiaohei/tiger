@@ -8,6 +8,8 @@
 #ifndef __TIGER_H__
 #define __TIGER_H__
 
+#include "config.h"
+#include "const.h"
 #include "log.h"
 #include "macro.h"
 #include "singleton.h"

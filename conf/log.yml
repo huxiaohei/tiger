@@ -1,0 +1,8 @@
+log:
+  - name: SYSTEM
+    level: INFO
+    formate: "%d{%Y-%m-%d %H:%M:%S} %t %N %F [%p] [%c] %f:%l %m%n"
+    appenders:
+      - type: FileLogAppender
+        level: INFO
+        file: ./system
