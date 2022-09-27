@@ -12,25 +12,22 @@
 #include <functional>
 #include <iostream>
 #include <list>
-#include <map>
-#include <memory>
 #include <sstream>
-#include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "singleton.h"
 #include "util.h"
 
-#define TIGER_LOG_LEVEL(logger, level)                                                             \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                         \
+#define TIGER_LOG_LEVEL(logger, level)                                                            \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                        \
                             logger, level, __FILE__, __LINE__, 0, 0, 0, tiger::Second(), "MAIN")) \
         .ss()
 
-#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                               \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                         \
+#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                              \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                        \
                             logger, level, __FILE__, __LINE__, 0, 0, 0, tiger::Second(), "MAIN")) \
-        .event()                                                                                   \
+        .event()                                                                                  \
         ->format(fmt, __VA_ARGS__);
 
 #define TIGER_LOG_DEBUG(logger) TIGER_LOG_LEVEL(logger, tiger::LogLevel::DEBUG)
@@ -56,9 +53,43 @@ class LogLevel {
         WARN = 3,
         ERROR = 4
     };
-    static const std::string to_string(LogLevel::Level level);
-    static const LogLevel::Level from_string(const std::string &level);
+    static const std::string ToString(LogLevel::Level level);
+    static const LogLevel::Level FromString(const std::string &level);
 };
+
+typedef struct {
+    std::string type;
+    LogLevel::Level level;
+    std::string file;
+    int interval;
+    std::string to_string() const {
+        std::stringstream ss;
+        ss << "[" << type << ","
+           << LogLevel::ToString(level) << ","
+           << file << ","
+           << interval << "]";
+        return ss.str();
+    }
+} AppenderDefine;
+
+typedef struct {
+    std::string name;
+    LogLevel::Level level;
+    std::string formater;
+    std::vector<AppenderDefine> appenders;
+    std::string to_string() const {
+        std::stringstream ss;
+        ss << "[\n\tname:" << name
+           << "\n\tlevel:" << level
+           << "\n\tformater:" << formater
+           << "\n\tappenders:";
+        for (auto it : appenders) {
+            ss << "\n\t\t" << it.to_string();
+        }
+        ss << "\n]";
+        return ss.str();
+    }
+} LoggerDefine;
 
 class LogEvent {
    private:
@@ -160,6 +191,7 @@ class LogAppender {
 
    public:
     typedef std::shared_ptr<LogAppender> ptr;
+
     LogAppender(LogFormatter::ptr formatter, LogLevel::Level level)
         : m_formatter(formatter), m_level(level) {}
     virtual ~LogAppender(){};
@@ -170,8 +202,10 @@ class LogAppender {
 class StdOutLogAppender : public LogAppender {
    public:
     typedef std::shared_ptr<StdOutLogAppender> ptr;
+
     StdOutLogAppender(LogFormatter::ptr formatter, LogLevel::Level level)
         : LogAppender(formatter, level){};
+
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override;
 };
 
@@ -188,8 +222,10 @@ class FileLogAppender : public LogAppender {
 
    public:
     typedef std::shared_ptr<FileLogAppender> ptr;
+
     FileLogAppender(LogFormatter::ptr formatter, LogLevel::Level level,
                     const std::string &path, size_t interval = 7200);
+
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override;
 };
 
@@ -226,7 +262,9 @@ class LoggerMgr {
    public:
     LoggerMgr();
 
+    bool add_loggers(const std::string &name, const std::string &path);
     bool add_logger(Logger::ptr logger);
+    bool add_logger(const LoggerDefine &log_def);
     bool del_logger(const std::string &logger_name);
     Logger::ptr get_logger_by(const std::string &logger_name = "ROOT");
 };

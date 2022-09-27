@@ -9,11 +9,59 @@
 
 #include <stdarg.h>
 
-#include "macro.h"
+#include "config.h"
 
 namespace tiger {
 
-const std::string LogLevel::to_string(LogLevel::Level level) {
+template <>
+class LexicalCast<std::string, LoggerDefine> {
+   public:
+    LoggerDefine operator()(const std::string &str) {
+        YAML::Node root = YAML::Load(str);
+        LoggerDefine v;
+        v.name = root["name"].as<std::string>();
+        v.level = LogLevel::FromString(root["level"].as<std::string>());
+        v.formater = root["formater"].as<std::string>();
+        for (size_t i = 0; i < root["appenders"].size(); ++i) {
+            auto it = root["appenders"][i];
+            AppenderDefine appender;
+            appender.type = it["type"].as<std::string>();
+            appender.level = LogLevel::FromString(it["level"].as<std::string>());
+            if (appender.type == "FileLogAppender") {
+                appender.file = it["file"].as<std::string>();
+                appender.interval = it["interval"].as<int>();
+            }
+            v.appenders.push_back(appender);
+        }
+        return v;
+    }
+};
+
+template <>
+class LexicalCast<LoggerDefine, std::string> {
+   public:
+    std::string operator()(const LoggerDefine &v) {
+        YAML::Node node;
+        node["name"] = v.name;
+        node["level"] = LogLevel::ToString(v.level);
+        node["formater"] = v.formater;
+        for (size_t i = 0; i < v.appenders.size(); ++i) {
+            YAML::Node sub_node;
+            sub_node["type"] = v.appenders[i].type;
+            sub_node["level"] = LogLevel::ToString(v.appenders[i].level);
+            if (v.appenders[i].type == "FileLogAppender") {
+                sub_node["file"] = v.appenders[i].file;
+                sub_node["interval"] = v.appenders[i].interval;
+            }
+            node["appenders"].push_back(sub_node);
+        }
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+const std::string LogLevel::ToString(LogLevel::Level level) {
     switch (level) {
 #define XX(name)         \
     case LogLevel::name: \
@@ -29,7 +77,7 @@ const std::string LogLevel::to_string(LogLevel::Level level) {
     }
 }
 
-const LogLevel::Level LogLevel::from_string(const std::string &level) {
+const LogLevel::Level LogLevel::FromString(const std::string &level) {
 #define XX(name) \
     if (#name == level) return Level::name
 
@@ -87,7 +135,7 @@ class LevelFormatItem : public LogFormatter::FormatItem {
         : LogFormatter::FormatItem(fmt) {}
     void format(const std::shared_ptr<Logger> logger, std::ostream &os,
                 LogLevel::Level level, LogEvent::ptr event) {
-        os << LogLevel::to_string(level);
+        os << LogLevel::ToString(level);
     }
 };
 
@@ -430,8 +478,36 @@ LoggerMgr::LoggerMgr() {
     add_logger(logger);
 }
 
+bool LoggerMgr::add_loggers(const std::string &name, const std::string &path) {
+    ConfigVar<std::vector<LoggerDefine>>::ptr cfg = Config::Lookup(name + ".log", (std::vector<LoggerDefine>){}, "__logs__");
+    Config::LoadFromYmal(name, path);
+    bool suc = true;
+    for (auto &it : cfg->val()) {
+        suc = add_logger(it) && suc;
+    }
+    return suc;
+}
+
+bool LoggerMgr::add_logger(const LoggerDefine &def) {
+    auto logger = std::make_shared<tiger::Logger>(def.name, def.level);
+    auto formatter = std::make_shared<tiger::LogFormatter>(def.formater);
+    for (auto &it : def.appenders) {
+        if (it.type == "FileLogAppender") {
+            auto appender = std::make_shared<FileLogAppender>(formatter, it.level, it.file);
+            logger->add_appender(appender);
+        } else {
+            auto appender = std::make_shared<StdOutLogAppender>(formatter, it.level);
+            logger->add_appender(appender);
+        }
+    }
+    return add_logger(logger);
+}
+
 bool LoggerMgr::add_logger(Logger::ptr logger) {
-    if (m_logger_map.find(logger->name()) != m_logger_map.end()) return false;
+    if (m_logger_map.find(logger->name()) != m_logger_map.end()) {
+        TIGER_LOG_W(SYSTEM_LOG) << logger->name() << " logger has exist";
+        return false;
+    }
     m_logger_map.insert(std::pair<std::string, Logger::ptr>(logger->name(), logger));
     return true;
 }

@@ -1,8 +1,11 @@
 log:
   - name: SYSTEM
     level: INFO
-    formate: "%d{%Y-%m-%d %H:%M:%S} %t %N %F [%p] [%c] %f:%l %m%n"
+    formater: "%d{%Y-%m-%d %H:%M:%S} %t %N %F [%p] [%c] %f:%l %m%n"
     appenders:
       - type: FileLogAppender
         level: INFO
         file: ./system
+        interval: 7200
+      - type: StdOutLogAppender
+        level: DEBUG

@@ -5,8 +5,8 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __MACRO_H__
-#define __MACRO_H__
+#ifndef __TIGER_MACRO_H__
+#define __TIGER_MACRO_H__
 
 #include <assert.h>
 #include <string.h>

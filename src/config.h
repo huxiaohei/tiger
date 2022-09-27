@@ -11,9 +11,6 @@
 #include <yaml-cpp/yaml.h>
 
 #include <boost/lexical_cast.hpp>
-#include <set>
-#include <string>
-#include <unordered_map>
 #include <unordered_set>
 
 #include "const.h"
@@ -261,8 +258,7 @@ class ConfigVar : public ConfValBase {
     }
 
     friend std::ostream &operator<<(std::ostream &os, const ConfigVar<T>::ptr conf) {
-        os << "[\nname: " << conf->name() << "\ndesc: " << conf->desc() << "\nval:\n"
-           << conf->to_string() << "]";
+        os << "\n[\n" << conf->name() << "," << conf->desc() << ",\n" << conf->to_string() << "\n]";
         return os;
     }
 };
@@ -278,8 +274,8 @@ class Config {
             throw std::invalid_argument(name);
         }
         it = std::make_shared<ConfigVar<T>>(name, def, desc);
-        S_DATAS()
-        [name] = it;
+        auto &datas = S_DATAS();
+        datas[name] = it;
         return it;
     }
 

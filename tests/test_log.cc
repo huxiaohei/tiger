@@ -8,7 +8,8 @@
 #include "../src/tiger.h"
 
 void test_log_base() {
-    auto logger = std::make_shared<tiger::Logger>("BASE");
+    const std::string LOG_NAME = "BASE";
+    auto logger = std::make_shared<tiger::Logger>(LOG_NAME);
     auto formatter = std::make_shared<tiger::LogFormatter>();
     auto std_out_appender = std::make_shared<tiger::StdOutLogAppender>(
         formatter, tiger::LogLevel::DEBUG);
@@ -26,7 +27,8 @@ void test_log_base() {
 }
 
 void test_log_macro() {
-    auto logger = std::make_shared<tiger::Logger>("MACRO");
+    const std::string LOG_NAME = "MACRO";
+    auto logger = std::make_shared<tiger::Logger>(LOG_NAME);
     auto formatter = std::make_shared<tiger::LogFormatter>();
     auto std_out_appender = std::make_shared<tiger::StdOutLogAppender>(
         formatter, tiger::LogLevel::DEBUG);
@@ -37,7 +39,8 @@ void test_log_macro() {
 }
 
 void test_log_macro_simple() {
-    auto logger = std::make_shared<tiger::Logger>("MACRO SIMPLE");
+    const std::string LOG_NAME = "MACRO SIMPLE";
+    auto logger = std::make_shared<tiger::Logger>(LOG_NAME);
     auto formatter = std::make_shared<tiger::LogFormatter>();
     auto std_out_appender = std::make_shared<tiger::StdOutLogAppender>(
         formatter, tiger::LogLevel::DEBUG);
@@ -102,31 +105,37 @@ void test_log_level() {
 }
 
 void test_log_file() {
-    const std::string FILE = "FILE";
-
-    auto logger = std::make_shared<tiger::Logger>(FILE);
+    const std::string LOG_NAME = "FILE";
+    auto logger = std::make_shared<tiger::Logger>(LOG_NAME);
     auto formatter = std::make_shared<tiger::LogFormatter>();
     auto file_logger_appender = std::make_shared<tiger::FileLogAppender>(
         formatter, tiger::LogLevel::DEBUG, "file_test", 5);
     logger->add_appender(file_logger_appender);
     tiger::SingletonLoggerMgr::Instance()->add_logger(logger);
 
-    TIGER_LOG_D(FILE) << "TEST_LOG_FILE_DEBUG";
-    TIGER_LOG_I(FILE) << "TEST_LOG_FILE_INFO";
-    TIGER_LOG_W(FILE) << "TEST_LOG_FILE_WARN";
-    TIGER_LOG_E(FILE) << "TEST_LOG_FILE_ERROR";
+    TIGER_LOG_D(LOG_NAME) << "TEST_LOG_FILE_DEBUG";
+    TIGER_LOG_I(LOG_NAME) << "TEST_LOG_FILE_INFO";
+    TIGER_LOG_W(LOG_NAME) << "TEST_LOG_FILE_WARN";
+    TIGER_LOG_E(LOG_NAME) << "TEST_LOG_FILE_ERROR";
 
     int a = 100;
-    TIGER_LOG_FMT_D(FILE, "%s %d %p", "TIGER_LOG_FMT_D", a, &a);
-    TIGER_LOG_FMT_I(FILE, "%s %d %p", "TIGER_LOG_FMT_I", a, &a);
-    TIGER_LOG_FMT_W(FILE, "%s %d %p", "TIGER_LOG_FMT_W", a, &a);
-    TIGER_LOG_FMT_E(FILE, "%s %d %p", "TIGER_LOG_FMT_E", a, &a);
+    TIGER_LOG_FMT_D(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_D", a, &a);
+    TIGER_LOG_FMT_I(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_I", a, &a);
+    TIGER_LOG_FMT_W(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_W", a, &a);
+    TIGER_LOG_FMT_E(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_E", a, &a);
+}
+
+void test_log_from_yaml() {
+    if (tiger::SingletonLoggerMgr::Instance()->add_loggers("log", "../conf/log.yml")) {
+        TIGER_LOG_INFO(tiger::SYSTEM_LOG) << "init success";
+    } else {
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "init fail";
+    }
 }
 
 void test_log_performance() {
-    const std::string FILE = "PERFORMANCE";
-
-    auto logger = std::make_shared<tiger::Logger>(FILE);
+    const std::string LOG_NAME = "PERFORMANCE";
+    auto logger = std::make_shared<tiger::Logger>(LOG_NAME);
     auto formatter = std::make_shared<tiger::LogFormatter>();
     auto file_logger_appender = std::make_shared<tiger::FileLogAppender>(
         formatter, tiger::LogLevel::DEBUG, "performance", 3600);
@@ -136,17 +145,17 @@ void test_log_performance() {
     auto t = tiger::Millisecond();
     int a = 100;
     for (auto i = 0; i < 1000000; ++i) {
-        TIGER_LOG_D(FILE) << "TEST_LOG_FILE_DEBUG";
-        TIGER_LOG_I(FILE) << "TEST_LOG_FILE_INFO";
-        TIGER_LOG_W(FILE) << "TEST_LOG_FILE_WARN";
-        TIGER_LOG_E(FILE) << "TEST_LOG_FILE_ERROR";
+        TIGER_LOG_D(LOG_NAME) << "TEST_LOG_FILE_DEBUG";
+        TIGER_LOG_I(LOG_NAME) << "TEST_LOG_FILE_INFO";
+        TIGER_LOG_W(LOG_NAME) << "TEST_LOG_FILE_WARN";
+        TIGER_LOG_E(LOG_NAME) << "TEST_LOG_FILE_ERROR";
 
-        TIGER_LOG_FMT_D(FILE, "%s %d %p", "TIGER_LOG_FMT_D", a, &a);
-        TIGER_LOG_FMT_I(FILE, "%s %d %p", "TIGER_LOG_FMT_I", a, &a);
-        TIGER_LOG_FMT_W(FILE, "%s %d %p", "TIGER_LOG_FMT_W", a, &a);
-        TIGER_LOG_FMT_E(FILE, "%s %d %p", "TIGER_LOG_FMT_E", a, &a);
+        TIGER_LOG_FMT_D(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_D", a, &a);
+        TIGER_LOG_FMT_I(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_I", a, &a);
+        TIGER_LOG_FMT_W(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_W", a, &a);
+        TIGER_LOG_FMT_E(LOG_NAME, "%s %d %p", "TIGER_LOG_FMT_E", a, &a);
     }
-    TIGER_LOG_D(FILE) << "PERFORMANCE COST TIME: " << tiger::Millisecond() - t << "ms";
+    TIGER_LOG_D(LOG_NAME) << "PERFORMANCE COST TIME: " << tiger::Millisecond() - t << "ms";
 }
 
 int main() {
@@ -156,6 +165,7 @@ int main() {
     test_log_level();
     test_log_mgr_base();
     test_log_file();
+    test_log_from_yaml();
     test_log_performance();
     return 0;
 }

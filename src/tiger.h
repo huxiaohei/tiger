@@ -5,8 +5,8 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_H__
-#define __TIGER_H__
+#ifndef __TIGER_TIGER_H__
+#define __TIGER_TIGER_H__
 
 #include "config.h"
 #include "const.h"
