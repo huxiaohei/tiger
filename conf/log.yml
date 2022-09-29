@@ -1,6 +1,6 @@
 log:
   - name: SYSTEM
-    level: INFO
+    level: DEBUG
     formater: "%d{%Y-%m-%d %H:%M:%S} %t %N %F [%p] [%c] %f:%l %m%n"
     appenders:
       - type: FileLogAppender
@@ -9,3 +9,10 @@ log:
         interval: 7200
       - type: StdOutLogAppender
         level: DEBUG
+  - name: TEST
+    level: DEBUG
+    formater: "%d{%Y-%m-%d %H:%M:%S} %t %N %F [%p] [%c] %f:%l %m%n"
+    appenders:
+      - type: StdOutLogAppender
+        level: DEBUG
+  

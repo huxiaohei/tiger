@@ -139,16 +139,6 @@ class LevelFormatItem : public LogFormatter::FormatItem {
     }
 };
 
-class ElapseFormatItem : public LogFormatter::FormatItem {
-   public:
-    ElapseFormatItem(const std::string &fmt = "")
-        : LogFormatter::FormatItem(fmt) {}
-    void format(const std::shared_ptr<Logger> logger, std::ostream &os,
-                LogLevel::Level level, LogEvent::ptr event) {
-        os << event->elapse();
-    }
-};
-
 class FileNameFormatItem : public LogFormatter::FormatItem {
    public:
     FileNameFormatItem(const std::string &fmt = "")
@@ -332,7 +322,6 @@ void LogFormatter::init() {
 
         XX(m, MessageFormatItem),     // m:消息
         XX(p, LevelFormatItem),       // p:日志级别
-        XX(r, ElapseFormatItem),      // r:累计毫秒数
         XX(c, LoggerNameFormatItem),  // c:日志名称
         XX(t, ThreadIdFormatItem),    // t:线程id
         XX(n, NewLineFormatItem),     // n:换行

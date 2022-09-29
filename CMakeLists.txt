@@ -11,6 +11,8 @@ set(LIB_SRC
     src/log.cc
     src/util.cc
     src/config.cc
+    src/mutex.cc
+    src/thread.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -31,3 +33,9 @@ target_link_libraries(test_log ${LIBS})
 
 add_executable(test_conf tests/test_config.cc)
 target_link_libraries(test_conf ${LIBS})
+
+add_executable(test_thread tests/test_thread.cc)
+target_link_libraries(test_thread ${LIBS})
+
+add_executable(test_mutex tests/test_mutex.cc)
+target_link_libraries(test_mutex ${LIBS})

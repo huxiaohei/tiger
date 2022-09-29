@@ -15,12 +15,12 @@ void test_log_base() {
         formatter, tiger::LogLevel::DEBUG);
     logger->add_appender(std_out_appender);
     auto event = std::make_shared<tiger::LogEvent>(
-        logger, tiger::LogLevel::DEBUG, __FILE__, __LINE__, 0, 0, 0, time(0), "MAIN");
+        logger, tiger::LogLevel::DEBUG, __FILE__, __LINE__, 0, 0, time(0), "MAIN");
     auto w = tiger::LogEventWarp(event);
     w.ss() << "Hello Tiger Log Base";
 
     auto event_format = std::make_shared<tiger::LogEvent>(
-        logger, tiger::LogLevel::DEBUG, __FILE__, __LINE__, 0, 0, 0, time(0), "MAIN");
+        logger, tiger::LogLevel::DEBUG, __FILE__, __LINE__, 0, 0, time(0), "MAIN");
     int a = 30;
     event_format->format("%d, %p", a, &a);
     auto w1 = tiger::LogEventWarp(event_format);
@@ -127,7 +127,7 @@ void test_log_file() {
 
 void test_log_from_yaml() {
     if (tiger::SingletonLoggerMgr::Instance()->add_loggers("log", "../conf/log.yml")) {
-        TIGER_LOG_INFO(tiger::SYSTEM_LOG) << "init success";
+        TIGER_LOG_I(tiger::SYSTEM_LOG) << "init success";
     } else {
         TIGER_LOG_E(tiger::SYSTEM_LOG) << "init fail";
     }

@@ -17,17 +17,18 @@
 #include <vector>
 
 #include "singleton.h"
+#include "thread.h"
 #include "util.h"
 
-#define TIGER_LOG_LEVEL(logger, level)                                                            \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                        \
-                            logger, level, __FILE__, __LINE__, 0, 0, 0, tiger::Second(), "MAIN")) \
+#define TIGER_LOG_LEVEL(logger, level)                                                                                                            \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                        \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), 0, tiger::Second(), tiger::Thread::CurThreadName())) \
         .ss()
 
-#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                              \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                        \
-                            logger, level, __FILE__, __LINE__, 0, 0, 0, tiger::Second(), "MAIN")) \
-        .event()                                                                                  \
+#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                                              \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                        \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), 0, tiger::Second(), tiger::Thread::CurThreadName())) \
+        .event()                                                                                                                                  \
         ->format(fmt, __VA_ARGS__);
 
 #define TIGER_LOG_DEBUG(logger) TIGER_LOG_LEVEL(logger, tiger::LogLevel::DEBUG)
@@ -97,7 +98,6 @@ class LogEvent {
     LogLevel::Level m_level;
     const char *m_file;
     int32_t m_line = 0;
-    uint32_t m_elapse = 0;
     uint32_t m_thread_id = 0;
     uint64_t m_co_id = 0;
     time_t m_time;
@@ -108,9 +108,8 @@ class LogEvent {
     typedef std::shared_ptr<LogEvent> ptr;
 
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
-             const char *file, int32_t line, uint32_t elapse,
-             uint32_t thread_id, uint64_t co_id, time_t time,
-             const std::string &thread_name)
+             const char *file, int32_t line, uint32_t thread_id,
+             uint64_t co_id, time_t time, const std::string &thread_name)
         : m_logger(logger),
           m_level(level),
           m_file(file),
@@ -124,7 +123,6 @@ class LogEvent {
     LogLevel::Level level() { return m_level; }
     const char *file() { return m_file; }
     int32_t line() { return m_line; }
-    uint32_t elapse() { return m_elapse; }
     uint32_t thread_id() { return m_thread_id; }
     uint64_t co_id() { return m_co_id; }
     time_t time() { return m_time; }

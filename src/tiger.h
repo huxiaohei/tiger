@@ -12,7 +12,9 @@
 #include "const.h"
 #include "log.h"
 #include "macro.h"
+#include "mutex.h"
 #include "singleton.h"
+#include "thread.h"
 #include "uri/uri.h"
 #include "util.h"
 
