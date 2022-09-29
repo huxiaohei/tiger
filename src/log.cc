@@ -370,8 +370,12 @@ std::ostream &LogFormatter::format(std::shared_ptr<Logger> logger,
 void StdOutLogAppender::log(std::shared_ptr<Logger> logger,
                             LogLevel::Level level,
                             LogEvent::ptr event) {
-    if (level >= m_level)
+    if (level >= m_level) {
+#ifdef __TIGER_MULTI_THREAD__
+        SpinLock::Lock lock(m_lock);
+#endif
         std::cout << m_formatter->format(logger, level, event);
+    }
 }
 
 FileLogAppender::FileLogAppender(LogFormatter::ptr formatter,
@@ -382,6 +386,9 @@ FileLogAppender::FileLogAppender(LogFormatter::ptr formatter,
     m_start_time = Second();
     m_start_time -= (m_start_time % 3600);
     m_interval = m_interval < 3600 ? 3600 : m_interval / 3600 * 3600;
+#ifdef __TIGER_MULTI_THREAD__
+    SpinLock::Lock lock(m_lock);
+#endif
     open_file();
 }
 
@@ -408,13 +415,22 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
         time_t now = Second();
         if (TIGER_UNLIKELY(now > m_end_time)) {
             m_start_time = now;
+#ifdef __TIGER_MULTI_THREAD__
+            SpinLock::Lock lock(m_lock);
+#endif
             open_file();
         }
+#ifdef __TIGER_MULTI_THREAD__
+        SpinLock::Lock lock(m_lock);
+#endif
         m_formatter->format(logger, m_filestream, level, event);
     }
 }
 
 void Logger::add_appender(LogAppender::ptr appender) {
+#ifdef __TIGER_MULTI_THREAD__
+    SpinLock::Lock lock(m_lock);
+#endif
     m_appenders.push_back(appender);
 }
 
@@ -424,6 +440,9 @@ void Logger::add_appenders(std::vector<LogAppender::ptr> appenders) {
 }
 
 void Logger::del_appender(LogAppender::ptr appender) {
+#ifdef __TIGER_MULTI_THREAD__
+    SpinLock::Lock lock(m_lock);
+#endif
     auto it = m_appenders.begin();
     while (it != m_appenders.end()) {
         if (*it == appender) {
@@ -453,6 +472,9 @@ void Logger::error(const LogEvent::ptr event) {
 void Logger::log(LogLevel::Level level,
                  const LogEvent::ptr event) {
     if (level < m_level) return;
+#ifdef __TIGER_MULTI_THREAD__
+    SpinLock::Lock lock(m_lock);
+#endif
     auto self = shared_from_this();
     for (auto &it : m_appenders)
         it->log(self, level, event);
@@ -510,6 +532,9 @@ bool LoggerMgr::del_logger(const std::string &logger_name) {
 }
 
 Logger::ptr LoggerMgr::get_logger_by(const std::string &logger_name) {
+#ifdef __TIGER_MULTI_THREAD__
+    SpinLock::Lock lock(m_lock);
+#endif
     auto it = m_logger_map.find(logger_name);
     if (it == m_logger_map.end()) {
         auto tmp = m_logger_map.at("ROOT");

@@ -158,6 +158,23 @@ void test_log_performance() {
     TIGER_LOG_D(LOG_NAME) << "PERFORMANCE COST TIME: " << tiger::Millisecond() - t << "ms";
 }
 
+void test_log_thread() {
+    auto t = tiger::Millisecond();
+    std::vector<tiger::Thread::ptr> v;
+    for (size_t i = 0; i < 3; ++i) {
+        v.push_back(std::make_shared<tiger::Thread>([]() {
+            for (size_t i = 0; i < 1000000; ++i) {
+                TIGER_LOG_D(tiger::TEST_LOG) << "LOG " << i;
+            }
+        },
+                                                    "LogThread"));
+    }
+    for (size_t i = 0; i < v.size(); ++i) {
+        v[i]->join();
+    }
+    TIGER_LOG_D(tiger::TEST_LOG) << "thread log cost time: " << tiger::Millisecond() - t << "ms";
+}
+
 int main() {
     test_log_base();
     test_log_macro();
@@ -167,5 +184,6 @@ int main() {
     test_log_file();
     test_log_from_yaml();
     test_log_performance();
+    test_log_thread();
     return 0;
 }

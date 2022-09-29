@@ -13,6 +13,8 @@ log:
     level: DEBUG
     formater: "%d{%Y-%m-%d %H:%M:%S} %t %N %F [%p] [%c] %f:%l %m%n"
     appenders:
-      - type: StdOutLogAppender
+      - type: FileLogAppender
         level: DEBUG
+        file: ./test
+        interval: 7200
   
