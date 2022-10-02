@@ -78,7 +78,7 @@ Coroutine::Coroutine() {
 }
 
 Coroutine::Coroutine(std::function<void()> fn, size_t stack_size)
-    :m_fn(fn), m_state(State::INIT), m_thread_id(0) {
+    : m_fn(fn), m_state(State::INIT), m_thread_id(0) {
     if (!s_t_main_co) {
         s_t_main_co = std::make_shared<Coroutine>();
         s_t_running_co = s_t_main_co;
@@ -135,6 +135,7 @@ bool Coroutine::reset(std::function<void()> fn) {
         if (getcontext(&m_ctx)) {
             TIGER_ASSERT_WITH_INFO(false, "getcontext error");
         }
+        m_id = ++s_co_id;
         m_ctx.uc_link = &(s_t_main_co->m_ctx);
         m_ctx.uc_stack.ss_sp = m_stack;
         m_ctx.uc_stack.ss_size = m_stack_size;

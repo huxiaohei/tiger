@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "coroutine.h"
 #include "env.h"
 #include "mutex.h"
 #include "singleton.h"
@@ -24,12 +25,12 @@
 
 #define TIGER_LOG_LEVEL(logger, level)                                                                                                            \
     tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                        \
-                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), 0, tiger::Second(), tiger::Thread::CurThreadName())) \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Second(), tiger::Thread::CurThreadName())) \
         .ss()
 
 #define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                                              \
     tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                        \
-                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), 0, tiger::Second(), tiger::Thread::CurThreadName())) \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Second(), tiger::Thread::CurThreadName())) \
         .event()                                                                                                                                  \
         ->format(fmt, __VA_ARGS__);
 
