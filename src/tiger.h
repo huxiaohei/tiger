@@ -17,5 +17,6 @@
 #include "thread.h"
 #include "uri/uri.h"
 #include "util.h"
+#include "coroutine.h"
 
 #endif

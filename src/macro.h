@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "const.h"
 #include "log.h"
 
 #if defined __GNUC__ || defined __llvm__
@@ -30,5 +31,11 @@
 #define TIGER_LOG_FMT_I(name, fmt, ...) TIGER_LOG_FMT_INFO(tiger::SingletonLoggerMgr::Instance()->get_logger_by(name), fmt, __VA_ARGS__)
 #define TIGER_LOG_FMT_W(name, fmt, ...) TIGER_LOG_FMT_WARN(tiger::SingletonLoggerMgr::Instance()->get_logger_by(name), fmt, __VA_ARGS__)
 #define TIGER_LOG_FMT_E(name, fmt, ...) TIGER_LOG_FMT_ERROR(tiger::SingletonLoggerMgr::Instance()->get_logger_by(name), fmt, __VA_ARGS__)
+
+#define TIGER_ASSERT_WITH_INFO(x, info)                                          \
+    if (!(x)) {                                                                  \
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "\nassert: " #x << "\ninfo: " << info; \
+        assert(x);                                                               \
+    }
 
 #endif
