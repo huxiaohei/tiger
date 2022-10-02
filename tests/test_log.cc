@@ -126,7 +126,7 @@ void test_log_file() {
 }
 
 void test_log_from_yaml() {
-    if (tiger::SingletonLoggerMgr::Instance()->add_loggers("log", "../conf/log.yml")) {
+    if (tiger::SingletonLoggerMgr::Instance()->add_loggers("log", "../conf/tiger.yml")) {
         TIGER_LOG_I(tiger::SYSTEM_LOG) << "init success";
     } else {
         TIGER_LOG_E(tiger::SYSTEM_LOG) << "init fail";

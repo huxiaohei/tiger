@@ -54,9 +54,9 @@ void test_thread_cond() {
 }
 
 int main() {
-    tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/log.yml");
+    tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     TIGER_LOG_D(tiger::TEST_LOG) << "thread start";
-    // test_create_threads(10);
+    test_create_threads(10);
     test_thread_cond();
     TIGER_LOG_D(tiger::TEST_LOG) << "thread end";
     return 0;
