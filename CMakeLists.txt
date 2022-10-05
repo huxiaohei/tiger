@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(TIGER)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O2 -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -g -O2 -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -DCMAKE_BUILD_TYPE=Debug")
 
 find_library(YAMLCPP yaml-cpp)
 
@@ -14,6 +14,7 @@ set(LIB_SRC
     src/mutex.cc
     src/thread.cc
     src/coroutine.cc
+    src/scheduler.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -43,3 +44,6 @@ target_link_libraries(test_mutex ${LIBS})
 
 add_executable(test_coroutine tests/test_coroutine.cc)
 target_link_libraries(test_coroutine ${LIBS})
+
+add_executable(test_scheduler tests/test_scheduler.cc)
+target_link_libraries(test_scheduler ${LIBS})

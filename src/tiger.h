@@ -18,5 +18,6 @@
 #include "uri/uri.h"
 #include "util.h"
 #include "coroutine.h"
+#include "scheduler.h"
 
 #endif
