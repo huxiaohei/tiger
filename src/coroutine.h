@@ -17,18 +17,17 @@ namespace tiger {
 class Coroutine : public std::enable_shared_from_this<Coroutine> {
    public:
     enum State {
-        INIT = 0x1,
-        RUNNING = 0x10,
-        YIELD = 0x100,
-        TERMINAL = 0x1000,
-        EXCEPT = 0x10000
+        INIT = 0b1,
+        RUNNING = 0b10,
+        YIELD = 0b100,
+        TERMINAL = 0b1000,
+        EXCEPT = 0b10000
     };
 
    private:
     size_t m_id;
     std::function<void()> m_fn;
     State m_state;
-    pid_t m_thread_id;
     ucontext_t m_ctx;
     void *m_stack = nullptr;
     size_t m_stack_size = 0;

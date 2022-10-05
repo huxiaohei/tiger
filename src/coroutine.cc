@@ -56,7 +56,7 @@ void Coroutine::Run() {
         s_t_running_co->m_state = State::TERMINAL;
     } catch (const std::exception &e) {
         s_t_running_co->m_state = State::EXCEPT;
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "Run Coroutine error:\n"
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "Run Cteoroutine error:\n"
                                        << "id:" << s_t_running_co->m_id << "\n"
                                        << "error:" << e.what();
     } catch (...) {
@@ -64,8 +64,7 @@ void Coroutine::Run() {
         TIGER_LOG_E(tiger::SYSTEM_LOG) << "Run Coroutine error:\n"
                                        << "id:" << s_t_running_co->m_id;
     }
-    s_t_main_co->m_state = State::RUNNING;
-    s_t_running_co = s_t_main_co;
+    swapcontext(&(s_t_running_co->m_ctx), &(s_t_main_co->m_ctx));
 }
 
 Coroutine::Coroutine() {
@@ -78,7 +77,7 @@ Coroutine::Coroutine() {
 }
 
 Coroutine::Coroutine(std::function<void()> fn, size_t stack_size)
-    : m_fn(fn), m_state(State::INIT), m_thread_id(0) {
+    : m_fn(fn), m_state(State::INIT) {
     if (!s_t_main_co) {
         s_t_main_co = std::make_shared<Coroutine>();
         s_t_running_co = s_t_main_co;
@@ -89,7 +88,6 @@ Coroutine::Coroutine(std::function<void()> fn, size_t stack_size)
     if (getcontext(&m_ctx)) {
         TIGER_ASSERT_WITH_INFO(false, "getcontext error");
     }
-    m_ctx.uc_link = &(s_t_main_co->m_ctx);
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_flags = 0;
     m_ctx.uc_stack.ss_size = m_stack_size;
@@ -126,6 +124,8 @@ void Coroutine::resume() {
     if (swapcontext(&(s_t_main_co->m_ctx), &m_ctx)) {
         TIGER_ASSERT_WITH_INFO(false, "swapcontext error");
     }
+    s_t_main_co->m_state = State::RUNNING;
+    s_t_running_co = s_t_main_co;
 }
 
 bool Coroutine::reset(std::function<void()> fn) {
@@ -136,7 +136,6 @@ bool Coroutine::reset(std::function<void()> fn) {
             TIGER_ASSERT_WITH_INFO(false, "getcontext error");
         }
         m_id = ++s_co_id;
-        m_ctx.uc_link = &(s_t_main_co->m_ctx);
         m_ctx.uc_stack.ss_sp = m_stack;
         m_ctx.uc_stack.ss_size = m_stack_size;
         m_state = State::INIT;
