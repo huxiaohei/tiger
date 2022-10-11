@@ -53,16 +53,18 @@ class Scheduler : public std::enable_shared_from_this<Scheduler> {
 
    private:
     std::string m_name;
-    bool m_user_main_thread;
+    bool m_use_main_thread;
     std::atomic<size_t> m_thread_cnt;
     pid_t m_main_thread_id;
     bool m_is_stopping;
     bool m_is_stopped;
-    std::list<Task> m_tasks;
     std::atomic<size_t> m_idle_cnt{0};
     std::vector<Thread::ptr> m_threads;
-    MutexLock m_mutex;
     Semaphore m_semaphore;
+
+   protected:
+    std::list<Task> m_tasks;
+    MutexLock m_mutex;
 
    protected:
     virtual void tickle();
@@ -72,19 +74,20 @@ class Scheduler : public std::enable_shared_from_this<Scheduler> {
    public:
     typedef std::shared_ptr<Scheduler> ptr;
 
-    Scheduler(const std::string &name = "", bool user_main_thread = false, size_t thread_cnt = 1);
+    Scheduler(const std::string &name = "", bool use_main_thread = false, size_t thread_cnt = 1);
     ~Scheduler();
 
     const std::string &name() const { return m_name; }
-    bool user_main_thread() const { return m_user_main_thread; }
+    bool use_main_thread() const { return m_use_main_thread; }
     size_t thread_cnt() const { return m_thread_cnt; }
     pid_t main_thread_id() const { return m_main_thread_id; }
     bool is_stopping() const { return m_is_stopping; }
     bool is_stopped() const { return m_is_stopped; }
+    bool has_idel_thread() const { return m_idle_cnt > 0; }
 
    public:
-    void start();
-    void stop();
+    virtual void start();
+    virtual void stop();
 
    public:
     template <typename T>

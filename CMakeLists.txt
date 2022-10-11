@@ -15,6 +15,8 @@ set(LIB_SRC
     src/thread.cc
     src/coroutine.cc
     src/scheduler.cc
+    src/timer.cc
+    src/iomanager.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -47,3 +49,6 @@ target_link_libraries(test_coroutine ${LIBS})
 
 add_executable(test_scheduler tests/test_scheduler.cc)
 target_link_libraries(test_scheduler ${LIBS})
+
+add_executable(test_iomanager tests/test_iomanager.cc)
+target_link_libraries(test_iomanager ${LIBS})

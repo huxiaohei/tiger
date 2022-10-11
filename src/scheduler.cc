@@ -11,12 +11,12 @@ namespace tiger {
 
 static thread_local Scheduler::ptr s_t_scheduler = nullptr;
 
-Scheduler::Scheduler(const std::string &name, bool user_main_thread, size_t thread_cnt)
-    : m_name(name), m_user_main_thread(user_main_thread), m_thread_cnt(thread_cnt) {
+Scheduler::Scheduler(const std::string &name, bool use_main_thread, size_t thread_cnt)
+    : m_name(name), m_use_main_thread(use_main_thread), m_thread_cnt(thread_cnt) {
     m_main_thread_id = Thread::CurThreadId();
     m_is_stopping = false;
     m_is_stopped = true;
-    if (m_user_main_thread) {
+    if (m_use_main_thread) {
         --m_thread_cnt;
     }
 }
@@ -41,7 +41,7 @@ void Scheduler::start() {
             m_threads.push_back(std::make_shared<Thread>(std::bind(&Scheduler::run, this), m_name + std::to_string(i + 1)));
         }
     }
-    if (m_user_main_thread) {
+    if (m_use_main_thread) {
         run();
     }
 }

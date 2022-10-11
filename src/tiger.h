@@ -19,5 +19,6 @@
 #include "util.h"
 #include "coroutine.h"
 #include "scheduler.h"
+#include "iomanager.h"
 
 #endif
