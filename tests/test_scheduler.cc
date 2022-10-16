@@ -9,13 +9,13 @@
 
 void func_1() {
     TIGER_LOG_D(tiger::TEST_LOG) << "func_1 start";
-    usleep(100);
+    usleep_f(100);
     TIGER_LOG_D(tiger::TEST_LOG) << "func_1 end";
 }
 
 void func_2() {
     TIGER_LOG_D(tiger::TEST_LOG) << "func_2 start";
-    usleep(200);
+    usleep_f(200);
     TIGER_LOG_D(tiger::TEST_LOG) << "func_2 end";
 }
 

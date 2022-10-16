@@ -16,7 +16,7 @@
 
 namespace tiger {
 
-class Scheduler : public std::enable_shared_from_this<Scheduler> {
+class Scheduler {
    private:
     struct Task {
         Coroutine::ptr m_co;
@@ -67,6 +67,8 @@ class Scheduler : public std::enable_shared_from_this<Scheduler> {
     MutexLock m_mutex;
 
    protected:
+    virtual void open_hook(){};
+    virtual void close_hook(){};
     virtual void tickle();
     virtual void run();
     virtual void idle();
@@ -84,6 +86,9 @@ class Scheduler : public std::enable_shared_from_this<Scheduler> {
     bool is_stopping() const { return m_is_stopping; }
     bool is_stopped() const { return m_is_stopped; }
     bool has_idel_thread() const { return m_idle_cnt > 0; }
+
+   public:
+    static Scheduler *GetThreadScheduler();
 
    public:
     virtual void start();

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(TIGER)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -g -O2 -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -DCMAKE_BUILD_TYPE=Debug")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -DCMAKE_BUILD_TYPE=Debug")
 
 find_library(YAMLCPP yaml-cpp)
 
@@ -17,6 +17,8 @@ set(LIB_SRC
     src/scheduler.cc
     src/timer.cc
     src/iomanager.cc
+    src/fdmanager.cc
+    src/hook.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})

@@ -9,7 +9,11 @@
 
 namespace tiger {
 
-static thread_local Scheduler::ptr s_t_scheduler = nullptr;
+static thread_local Scheduler *s_t_scheduler = nullptr;
+
+Scheduler *Scheduler::GetThreadScheduler() {
+    return s_t_scheduler;
+}
 
 Scheduler::Scheduler(const std::string &name, bool use_main_thread, size_t thread_cnt)
     : m_name(name), m_use_main_thread(use_main_thread), m_thread_cnt(thread_cnt) {
@@ -59,8 +63,9 @@ void Scheduler::tickle() {
 }
 
 void Scheduler::run() {
+    open_hook();
     auto idle_co = std::make_shared<Coroutine>(std::bind(&Scheduler::idle, this));
-    s_t_scheduler = shared_from_this();
+    s_t_scheduler = this;
     Task task;
     while (true) {
         task.reset();
@@ -112,6 +117,7 @@ void Scheduler::run() {
     }
     --m_thread_cnt;
     tickle();
+    close_hook();
 }
 
 void Scheduler::idle() {

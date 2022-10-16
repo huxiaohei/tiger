@@ -15,17 +15,23 @@
 #include <functional>
 #include <vector>
 
+#include "hook.h"
+
 namespace tiger {
+
+IOManager *IOManager::GetThreadIOM() {
+    return dynamic_cast<IOManager *>(Scheduler::GetThreadScheduler());
+}
 
 IOManager::Context::EventContext &IOManager::Context::get_event_context(const EventStatus status) {
     return status == EventStatus::READ ? read : write;
 }
 
 void IOManager::Context::reset_event_context(EventContext &ctx) {
-    ctx.scheduler.reset();
     ctx.thread_id = 0;
     ctx.co.reset();
     ctx.cb = nullptr;
+    ctx.scheduler = nullptr;
 }
 
 void IOManager::Context::trigger_event(const EventStatus status) {
@@ -42,7 +48,7 @@ void IOManager::Context::trigger_event(const EventStatus status) {
     } else {
         ctx.scheduler->schedule(&ctx.cb, ctx.thread_id);
     }
-    ctx.scheduler.reset();
+    reset_event_context(ctx);
 }
 
 IOManager::IOManager(const std::string &name, bool use_main_thread, size_t thread_cnt)
@@ -68,6 +74,14 @@ IOManager::~IOManager() {
     for (size_t i = 0; i < m_contexts.size(); ++i) {
         if (m_contexts[i]) delete m_contexts[i];
     }
+}
+
+void IOManager::open_hook() {
+    enable_hook(true);
+}
+
+void IOManager::close_hook() {
+    enable_hook(false);
 }
 
 void IOManager::tickle() {
@@ -134,7 +148,7 @@ void IOManager::idle() {
                 --m_appending_event_cnt;
             }
         }
-        {   
+        {
             MutexLock::Lock lock(m_mutex);
             if (is_stopping() && m_tasks.size() == 0) {
                 if (main_thread_id() == Thread::CurThreadId()) {
@@ -197,10 +211,11 @@ bool IOManager::add_event(int fd, EventStatus status, std::function<void()> cb) 
     ++m_appending_event_cnt;
     ctx->statuses = (EventStatus)(ctx->statuses | status);
     auto &event_context = ctx->get_event_context(status);
+    event_context.scheduler = Scheduler::GetThreadScheduler();
     if (cb) {
         event_context.cb.swap(cb);
     } else {
-        event_context.co = std::make_shared<Coroutine>([]() {});
+        event_context.co = Coroutine::GetRunningCo();
         event_context.thread_id = Thread::CurThreadId();
     }
     return true;

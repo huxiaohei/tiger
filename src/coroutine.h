@@ -52,6 +52,7 @@ class Coroutine : public std::enable_shared_from_this<Coroutine> {
 
    public:
     static size_t CurCoroutineId();
+    static std::shared_ptr<Coroutine> GetRunningCo();
     static void Yield();
     static void Resume();
 };

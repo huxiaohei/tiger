@@ -39,6 +39,13 @@ size_t Coroutine::CurCoroutineId() {
     return 0;
 }
 
+std::shared_ptr<Coroutine> Coroutine::GetRunningCo() {
+    if (s_t_running_co) {
+        return s_t_running_co;
+    }
+    return s_t_main_co;
+}
+
 void Coroutine::Yield() {
     if (s_t_running_co)
         s_t_running_co->yield();

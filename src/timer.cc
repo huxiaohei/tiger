@@ -94,9 +94,8 @@ bool TimerManager::cancel_timer(Timer::ptr timer) {
 #ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::WriteLock lock(m_lock);
 #endif
+    if (!timer) return false;
     if (m_timers.find(timer) == m_timers.end()) {
-        TIGER_LOG_E(SYSTEM_LOG) << "cancel_timer error"
-                                << "\n\tid:" << timer->m_id;
         return false;
     }
     bool need_refresh = m_timers.begin() == m_timers.find(timer);
@@ -145,7 +144,6 @@ void TimerManager::all_expired_cbs(std::vector<std::function<void()>> &cbs) {
     auto n_ms = Millisecond();
     std::vector<TimerManager::Timer::ptr> expired_timers;
     for (auto &timer : m_timers) {
-
         if (timer->m_next_time > n_ms) break;
         expired_timers.push_back(timer);
     }
