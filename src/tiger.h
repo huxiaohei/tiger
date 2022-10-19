@@ -8,9 +8,11 @@
 #ifndef __TIGER_TIGER_H__
 #define __TIGER_TIGER_H__
 
+#include "address.h"
 #include "config.h"
 #include "const.h"
 #include "coroutine.h"
+#include "endian.h"
 #include "fdmanager.h"
 #include "hook.h"
 #include "iomanager.h"

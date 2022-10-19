@@ -19,6 +19,7 @@ set(LIB_SRC
     src/iomanager.cc
     src/fdmanager.cc
     src/hook.cc
+    src/address.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -54,3 +55,6 @@ target_link_libraries(test_scheduler ${LIBS})
 
 add_executable(test_iomanager tests/test_iomanager.cc)
 target_link_libraries(test_iomanager ${LIBS})
+
+add_executable(test_address tests/test_address.cc)
+target_link_libraries(test_address ${LIBS})
