@@ -87,12 +87,12 @@ bool Address::Lookup(std::vector<Address::ptr> &r, const std::string &host,
     }
     int err = getaddrinfo(node.c_str(), service, &hints, &results);
     if (err) {
-        TIGER_LOG_E(SYSTEM_LOG) << "getaddeinfo error:"
-                                << "\n\thost:" << host
-                                << "\n\tfamily:" << family
-                                << "\n\ttype:" << type
-                                << "\n\tprotocol:" << protocol
-                                << "\n\terror:" << gai_strerror(err);
+        TIGER_LOG_E(SYSTEM_LOG) << "[getaddeinfo faills "
+                                << " host:" << host
+                                << " family:" << family
+                                << " type:" << type
+                                << " protocol:" << protocol
+                                << " error:" << gai_strerror(err) << "]";
         return false;
     }
     next = results;
@@ -113,12 +113,24 @@ Address::ptr Address::LookupAny(const std::string &host, int family,
     return nullptr;
 }
 
+IPAddress::ptr IPAddress::LookupAny(const std::string &host, int family,
+                                    int type, int protocol) {
+    std::vector<Address::ptr> rst;
+    if (Lookup(rst, host, family, type, protocol)) {
+        for (auto &i : rst) {
+            IPAddress::ptr v = std::dynamic_pointer_cast<IPAddress>(i);
+            if (v) return v;
+        }
+    }
+    return nullptr;
+}
+
 bool IPAddress::InterfaceAddresses(std::multimap<std::string, std::pair<IPAddress::ptr, uint32_t>> &r,
                                    int family) {
     struct ifaddrs *next, *rs;
     if (getifaddrs(&rs) != 0) {
-        TIGER_LOG_E(SYSTEM_LOG) << "getifaddrs error"
-                                << "\n\terrno:" << strerror(errno);
+        TIGER_LOG_E(SYSTEM_LOG) << "[getifaddrs error"
+                                << " errno:" << strerror(errno) << "]";
         return false;
     }
     try {
@@ -156,7 +168,7 @@ bool IPAddress::InterfaceAddresses(std::multimap<std::string, std::pair<IPAddres
             next = next->ifa_next;
         }
     } catch (...) {
-        TIGER_LOG_E(SYSTEM_LOG) << "InterfaceAddress error";
+        TIGER_LOG_E(SYSTEM_LOG) << "[InterfaceAddress error]";
         freeifaddrs(rs);
         return false;
     }
@@ -233,10 +245,10 @@ IPv4Address::ptr IPv4Address::Create(const char *addr, uint16_t port) {
     rt->m_addr.sin_port = bswap_on_little_endian(port);
     int err = inet_pton(AF_INET, addr, &rt->m_addr.sin_addr);
     if (err <= 0) {
-        TIGER_LOG_E(SYSTEM_LOG) << "inet_pton error"
-                                << "\n\taddr:" << addr
-                                << "\n\terr:" << err
-                                << "\n\terrno:" << strerror(errno);
+        TIGER_LOG_E(SYSTEM_LOG) << "[inet_pton error"
+                                << " addr:" << addr
+                                << " err:" << err
+                                << " errno:" << strerror(errno) << "]";
         return nullptr;
     }
     return rt;
@@ -313,9 +325,9 @@ IPv6Address::ptr IPv6Address::Create(const char *addr, uint16_t port) {
     rt->m_addr.sin6_port = bswap_on_little_endian(port);
     int r = inet_pton(AF_INET6, addr, &rt->m_addr.sin6_addr);
     if (r <= 0) {
-        TIGER_LOG_E(SYSTEM_LOG) << "inet_pton error"
-                                << "\n\trt:" << rt
-                                << "\n\terron:" << strerror(errno);
+        TIGER_LOG_E(SYSTEM_LOG) << "[inet_pton error"
+                                << " rt:" << rt
+                                << " erron:" << strerror(errno) << "]";
         return nullptr;
     }
     return rt;
@@ -409,7 +421,7 @@ UnixAddress::UnixAddress(const std::string &path) {
         --m_len;
     }
     if (m_len > sizeof(m_addr.sun_path)) {
-        throw std::logic_error("path too long " + path);
+        throw std::logic_error("[path too long " + path + "]");
     }
     memcpy(m_addr.sun_path, path.c_str(), m_len);
     m_len += offsetof(sockaddr_un, sun_path);
@@ -479,35 +491,6 @@ std::ostream &operator<<(std::ostream &os, const Address &addr) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Address::ptr addr) {
-    addr->insert(os);
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const IPAddress &addr) {
-    addr.insert(os);
-    return os;
-}
-std::ostream &operator<<(std::ostream &os, const IPAddress::ptr addr) {
-    addr->insert(os);
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const IPv4Address &addr) {
-    addr.insert(os);
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const IPv4Address::ptr addr) {
-    addr->insert(os);
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const IPv6Address &addr) {
-    addr.insert(os);
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const IPv6Address::ptr addr) {
     addr->insert(os);
     return os;
 }

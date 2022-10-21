@@ -101,7 +101,7 @@ void Scheduler::run() {
             if (task.m_co->state() & (Coroutine::State::INIT | Coroutine::State::YIELD)) {
                 task.m_co->resume();
             } else {
-                TIGER_LOG_E(SYSTEM_LOG) << "The coroutine is nullptr";
+                TIGER_LOG_E(SYSTEM_LOG) << "[the coroutine is nullptr]";
             }
         } else {
             if (m_is_stopping) {
@@ -121,7 +121,7 @@ void Scheduler::run() {
 }
 
 void Scheduler::idle() {
-    TIGER_LOG_D(TEST_LOG) << "enter idle";
+    TIGER_LOG_D(TEST_LOG) << "[enter idle]";
     while (true) {
         if (m_is_stopping) {
             if (m_main_thread_id == Thread::CurThreadId() && m_thread_cnt > 0) {
@@ -139,7 +139,7 @@ void Scheduler::idle() {
             Coroutine::Yield();
         }
     }
-    TIGER_LOG_D(TEST_LOG) << "idle exit";
+    TIGER_LOG_D(TEST_LOG) << "[idle exit]";
 }
 
 }  // namespace tiger

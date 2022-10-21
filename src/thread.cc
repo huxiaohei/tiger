@@ -26,8 +26,8 @@ Thread::Thread(std::function<void()> cb, const std::string &name)
     }
     auto it = pthread_create(&m_thread, nullptr, &Thread::Run, this);
     if (it) {
-        TIGER_LOG_E(SYSTEM_LOG) << "pthread_create error";
-        throw std::logic_error("pthread_create error");
+        TIGER_LOG_E(SYSTEM_LOG) << "[pthread_create fail]";
+        throw std::logic_error("[pthread_create fail]");
     }
     m_semaphore.wait();
 }
@@ -42,8 +42,8 @@ void Thread::join() {
     if (m_thread) {
         auto it = pthread_join(m_thread, nullptr);
         if (it) {
-            TIGER_LOG_E(SYSTEM_LOG) << "pthread_join error";
-            throw std::logic_error("pthread_join error");
+            TIGER_LOG_E(SYSTEM_LOG) << "[pthread_join fail]";
+            throw std::logic_error("[pthread_join fail]");
         }
     }
     m_thread = 0;
@@ -95,7 +95,7 @@ void *Thread::Run(void *arg) {
         thread->m_semaphore.post();
         cb();
     } catch (const std::exception &e) {
-        TIGER_LOG_E(SYSTEM_LOG) << "thread run error " << e.what();
+        TIGER_LOG_E(SYSTEM_LOG) << "[thread run fail " << e.what() << "]";
     }
     return 0;
 }

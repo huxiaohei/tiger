@@ -63,13 +63,13 @@ void Coroutine::Run() {
         s_t_running_co->m_state = State::TERMINAL;
     } catch (const std::exception &e) {
         s_t_running_co->m_state = State::EXCEPT;
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "Run Cteoroutine error:\n"
-                                       << "id:" << s_t_running_co->m_id << "\n"
-                                       << "error:" << e.what();
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "[run coroutine fail"
+                                       << " id:" << s_t_running_co->m_id
+                                       << " error:" << e.what() << "]";
     } catch (...) {
         s_t_running_co->m_state = State::EXCEPT;
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "Run Coroutine error:\n"
-                                       << "id:" << s_t_running_co->m_id;
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "[run coroutine fail"
+                                       << " id:" << s_t_running_co->m_id << "]";
     }
     swapcontext(&(s_t_running_co->m_ctx), &(s_t_main_co->m_ctx));
 }
@@ -78,7 +78,7 @@ Coroutine::Coroutine() {
     m_state = State::RUNNING;
     m_id = ++s_co_id;
     if (getcontext(&m_ctx)) {
-        TIGER_ASSERT_WITH_INFO(false, "getcontext error");
+        TIGER_ASSERT_WITH_INFO(false, "[getcontext fail]");
     }
     ++s_co_cnt;
 }
@@ -93,7 +93,7 @@ Coroutine::Coroutine(std::function<void()> fn, size_t stack_size)
     m_stack_size = stack_size == 0 ? g_co_stack_size->val() : stack_size;
     m_stack = MallocStackAllocator::Alloc(m_stack_size);
     if (getcontext(&m_ctx)) {
-        TIGER_ASSERT_WITH_INFO(false, "getcontext error");
+        TIGER_ASSERT_WITH_INFO(false, "[getcontext fail]");
     }
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_flags = 0;
@@ -114,33 +114,33 @@ Coroutine::~Coroutine() {
 }
 
 void Coroutine::yield() {
-    TIGER_ASSERT_WITH_INFO(s_t_running_co != s_t_main_co, "The main coroutinue cannot be suspended by itself");
+    TIGER_ASSERT_WITH_INFO(s_t_running_co != s_t_main_co, "[the main coroutinue cannot be suspended by itself]");
     m_state = State::YIELD;
     s_t_main_co->m_state = State::RUNNING;
     s_t_running_co = s_t_main_co;
     if (swapcontext(&m_ctx, &(s_t_main_co->m_ctx))) {
-        TIGER_ASSERT_WITH_INFO(false, "swapcontext error");
+        TIGER_ASSERT_WITH_INFO(false, "[swapcontext fail]");
     }
 }
 
 void Coroutine::resume() {
-    TIGER_ASSERT_WITH_INFO(m_state & (State::INIT | State::YIELD), "Coroutine can only be resumed when it is INIT or Yield");
+    TIGER_ASSERT_WITH_INFO(m_state & (State::INIT | State::YIELD), "[coroutine can only be resumed when it is INIT or Yield]");
     s_t_main_co->m_state = State::YIELD;
     m_state = State::RUNNING;
     s_t_running_co = shared_from_this();
     if (swapcontext(&(s_t_main_co->m_ctx), &m_ctx)) {
-        TIGER_ASSERT_WITH_INFO(false, "swapcontext error");
+        TIGER_ASSERT_WITH_INFO(false, "[swapcontext fail]");
     }
     s_t_main_co->m_state = State::RUNNING;
     s_t_running_co = s_t_main_co;
 }
 
 bool Coroutine::reset(std::function<void()> fn) {
-    TIGER_ASSERT_WITH_INFO(m_stack, "Coroutine stack is nullptr");
+    TIGER_ASSERT_WITH_INFO(m_stack, "[coroutine stack is nullptr]");
     if (m_state & (State::INIT | State::TERMINAL | State::EXCEPT)) {
         m_fn = fn;
         if (getcontext(&m_ctx)) {
-            TIGER_ASSERT_WITH_INFO(false, "getcontext error");
+            TIGER_ASSERT_WITH_INFO(false, "[getcontext fail]");
         }
         m_id = ++s_co_id;
         m_ctx.uc_stack.ss_sp = m_stack;

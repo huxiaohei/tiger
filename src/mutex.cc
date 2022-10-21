@@ -14,8 +14,8 @@ namespace tiger {
 
 Semaphore::Semaphore(uint32_t count) {
     if (sem_init(&m_semaphore, 0, count)) {
-        TIGER_LOG_E(SYSTEM_LOG) << "sem_init error";
-        throw std::logic_error("sem_init error");
+        TIGER_LOG_E(SYSTEM_LOG) << "[sem_init fail]";
+        throw std::logic_error("[sem_init fail]");
     }
 }
 
@@ -25,15 +25,15 @@ Semaphore::~Semaphore() {
 
 void Semaphore::wait() {
     if (sem_wait(&m_semaphore)) {
-        TIGER_LOG_E(SYSTEM_LOG) << "sem_wait error";
-        throw std::logic_error("sem_wait error");
+        TIGER_LOG_E(SYSTEM_LOG) << "[sem_wait fail]";
+        throw std::logic_error("[sem_wait fail]");
     }
 }
 
 void Semaphore::post() {
     if (sem_post(&m_semaphore)) {
-        TIGER_LOG_E(SYSTEM_LOG) << "sem_post error";
-        throw std::logic_error("sem_post error");
+        TIGER_LOG_E(SYSTEM_LOG) << "[sem_post fail]";
+        throw std::logic_error("[sem_post fail]");
     }
 }
 

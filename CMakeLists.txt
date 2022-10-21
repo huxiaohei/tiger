@@ -20,6 +20,7 @@ set(LIB_SRC
     src/fdmanager.cc
     src/hook.cc
     src/address.cc
+    src/socket.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -58,3 +59,6 @@ target_link_libraries(test_iomanager ${LIBS})
 
 add_executable(test_address tests/test_address.cc)
 target_link_libraries(test_address ${LIBS})
+
+add_executable(test_socket tests/test_socket.cc)
+target_link_libraries(test_socket ${LIBS})

@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <string>
 
 namespace tiger {
 
@@ -17,6 +18,11 @@ bool IsValidName(const std::string &name);
 
 time_t Millisecond();
 time_t Second();
+
+namespace FS {
+static bool Unlink(const std::string &filename, bool exist = false);
+
+}
 
 }  // namespace tiger
 

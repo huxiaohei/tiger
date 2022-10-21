@@ -40,24 +40,24 @@ void test_iface() {
         return;
     }
     for (auto it : rts) {
-        TIGER_LOG_D(tiger::TEST_LOG) << "\nname:" << it.first
-                                     << "\nip:" << it.second.first
-                                     << "\nprefixlen:" << it.second.second
-                                     << "\nsubnetmask:" << it.second.first->subnet_mask(it.second.second)
-                                     << "\nnetworkAddress:" << it.second.first->network_address(it.second.second)
-                                     << "\nbroadcastAddress:" << it.second.first->broadcast_address(it.second.second);
+        TIGER_LOG_D(tiger::TEST_LOG) << "[name:" << it.first
+                                     << " ip:" << it.second.first
+                                     << " prefixlen:" << it.second.second
+                                     << " subnetmask:" << it.second.first->subnet_mask(it.second.second)
+                                     << " networkAddress:" << it.second.first->network_address(it.second.second)
+                                     << " broadcastAddress:" << it.second.first->broadcast_address(it.second.second) << "]";
     }
     std::vector<std::pair<tiger::IPAddress::ptr, uint32_t>> lo_rts;
     if (!tiger::IPAddress::InterfaceAddresses(lo_rts, "lo", AF_INET)) {
         TIGER_LOG_D(tiger::TEST_LOG) << "get lo interface address fail";
     }
     for (auto it : lo_rts) {
-        TIGER_LOG_D(tiger::TEST_LOG) << "\nname:lo"
-                                     << "\nip:" << it.first
-                                     << "\nprefixlen:" << it.second
-                                     << "\nsubnetmask:" << it.first->subnet_mask(it.second)
-                                     << "\nnetworkAddress:" << it.first->network_address(it.second)
-                                     << "\nbroadcastAddress:" << it.first->broadcast_address(it.second);
+        TIGER_LOG_D(tiger::TEST_LOG) << "[name:lo"
+                                     << " ip:" << it.first
+                                     << " prefixlen:" << it.second
+                                     << " subnetmask:" << it.first->subnet_mask(it.second)
+                                     << " networkAddress:" << it.first->network_address(it.second)
+                                     << " broadcastAddress:" << it.first->broadcast_address(it.second) << "]";
     }
     TIGER_LOG_D(tiger::TEST_LOG) << "test iface end";
 }

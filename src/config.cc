@@ -15,7 +15,7 @@ static void list_all_member(const YAML::Node &root,
                             const std::string &prefix,
                             AllNodes &all_nodes) {
     if (!IsValidName(prefix) || prefix.empty()) {
-        TIGER_LOG_E(SYSTEM_LOG) << "INVALID KEY: " << prefix;
+        TIGER_LOG_E(SYSTEM_LOG) << "[INVALID KEY: " << prefix << "]";
         return;
     }
     all_nodes.push_back(std::make_pair(prefix, root));

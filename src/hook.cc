@@ -90,15 +90,14 @@ static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
     } else if (status & tiger::IOManager::EventStatus::WRITE) {
         timeout = fd_entity->send_timeout();
     } else {
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "iomanager event status not found"
-                                       << "\n\t status:" << status
-                                       << "\n\t func:" << hook_func_name;
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "[iomanager event status not found"
+                                       << " status:" << status
+                                       << " func:" << hook_func_name << "]";
     }
     auto state = std::make_shared<SocketIoState>();
     ssize_t n = -1;
     do {
         n = func(fd, std::forward<Args>(args)...);
-        std::cout << "n:" << n << "   " << hook_func_name;
         if (n == -1 && errno == EAGAIN) {
             auto iom = tiger::IOManager::GetThreadIOM();
             tiger::TimerManager::Timer::ptr timer;
@@ -126,9 +125,9 @@ static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
                 continue;
             } else {
                 iom->cancel_timer(timer);
-                TIGER_LOG_E(tiger::SYSTEM_LOG) << "iomanager add event error"
-                                               << "\n\tstatus:" << status
-                                               << "\n\thookName:" << hook_func_name;
+                TIGER_LOG_E(tiger::SYSTEM_LOG) << "[iomanager add event error"
+                                               << " status:" << status
+                                               << " hookName:" << hook_func_name << "]";
                 return -1;
             }
         }
@@ -189,7 +188,7 @@ int socket(int domain, int type, int protocol) {
     if (!tiger::__enable_hook()) return socket_f(domain, type, protocol);
     int fd = socket_f(domain, type, protocol);
     if (-1 == fd) {
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "create socket error";
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "[create socket fail]";
         return fd;
     }
     return tiger::SingletonFDManager::Instance()->get_fd(fd, true)->fd();
@@ -199,7 +198,7 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     if (!tiger::__enable_hook()) return connect_f(sockfd, addr, addrlen);
     auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(sockfd);
     if (!fd_entity || fd_entity->is_closed()) {
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "socket connect error";
+        TIGER_LOG_E(tiger::SYSTEM_LOG) << "[socket connect fail]";
         errno = EBADF;
         return -1;
     }

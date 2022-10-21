@@ -46,6 +46,8 @@ class Address {
     bool operator<(const Address &other) const;
     bool operator==(const Address &other) const;
     bool operator!=(const Address &other) const;
+    friend std::ostream &operator<<(std::ostream &os, const Address &addr);
+    friend std::ostream &operator<<(std::ostream &os, const Address::ptr addr);
 };
 
 class IPAddress : public Address {
@@ -58,6 +60,8 @@ class IPAddress : public Address {
     static IPAddress::ptr Create(const char *address, uint16_t port = 0);
 
    public:
+    static IPAddress::ptr LookupAny(const std::string &host, int family = AF_INET,
+                                    int type = 0, int protocol = 0);
     static bool InterfaceAddresses(std::multimap<std::string, std::pair<IPAddress::ptr, uint32_t>> &r,
                                    int family = AF_INET);
     static bool InterfaceAddresses(std::vector<std::pair<IPAddress::ptr, uint32_t>> &r,
@@ -159,18 +163,6 @@ class UnknownAddress : public Address {
     const socklen_t get_addr_len() const override;
     std::ostream &insert(std::ostream &os) const override;
 };
-
-std::ostream &operator<<(std::ostream &os, const Address &addr);
-std::ostream &operator<<(std::ostream &os, const Address::ptr addr);
-
-std::ostream &operator<<(std::ostream &os, const IPAddress &addr);
-std::ostream &operator<<(std::ostream &os, const IPAddress::ptr addr);
-
-std::ostream &operator<<(std::ostream &os, const IPv4Address &addr);
-std::ostream &operator<<(std::ostream &os, const IPv4Address::ptr addr);
-
-std::ostream &operator<<(std::ostream &os, const IPv6Address &addr);
-std::ostream &operator<<(std::ostream &os, const IPv6Address::ptr addr);
 
 }  // namespace tiger
 
