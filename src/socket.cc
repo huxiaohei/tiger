@@ -451,8 +451,14 @@ bool Socket::cancel_all() {
 
 std::ostream &Socket::dump(std::ostream &os) const {
     os << "[Socket sock:" << m_sock << " connected:" << m_is_connected << " family:" << m_family
-       << " type:" << m_type << " protocol:" << m_protocol << " localAddr:" << m_local_addr
-       << " remoteAddr:" << m_remote_addr << "]";
+       << " type:" << m_type << " protocol:" << m_protocol;
+    if (m_local_addr) {
+        os << " localAddr:" << m_local_addr;
+    }
+    if (m_remote_addr) {
+        os << " remoteAddr:" << m_remote_addr;
+    }
+    os << "]";
     return os;
 }
 

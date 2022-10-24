@@ -21,3 +21,11 @@ log:
         level: DEBUG
 coroutine:
   stackSize: 131072
+tcp:
+  connectTimeout: 6000
+  recvTimeout: 6000
+  sendTimeout: 6000
+servers:
+  tcp:
+    acceptTimeout: 10000
+    recvTimeout: 6000

@@ -22,6 +22,9 @@ set(LIB_SRC
     src/address.cc
     src/socket.cc
     src/bytearray.cc
+    src/streams/stream.cc
+    src/streams/socket_stream.cc
+    src/servers/tcp_server.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -66,3 +69,6 @@ target_link_libraries(test_socket ${LIBS})
 
 add_executable(test_bytearray tests/test_bytearray.cc)
 target_link_libraries(test_bytearray ${LIBS})
+
+add_executable(test_tcpserver tests/test_tcpserver.cc)
+target_link_libraries(test_tcpserver ${LIBS})

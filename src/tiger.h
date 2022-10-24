@@ -9,6 +9,7 @@
 #define __TIGER_TIGER_H__
 
 #include "address.h"
+#include "bytearray.h"
 #include "config.h"
 #include "const.h"
 #include "coroutine.h"
@@ -20,12 +21,14 @@
 #include "macro.h"
 #include "mutex.h"
 #include "scheduler.h"
+#include "servers/tcp_server.h"
 #include "singleton.h"
 #include "socket.h"
+#include "streams/socket_stream.h"
+#include "streams/stream.h"
 #include "thread.h"
 #include "time.h"
 #include "uri/uri.h"
 #include "util.h"
-#include "bytearray.h"
 
 #endif
