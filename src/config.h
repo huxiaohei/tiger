@@ -258,7 +258,9 @@ class ConfigVar : public ConfValBase {
     }
 
     friend std::ostream &operator<<(std::ostream &os, const ConfigVar<T>::ptr conf) {
-        os << "\n[\n" << conf->name() << "," << conf->desc() << ",\n" << conf->to_string() << "\n]";
+        os << "\n[\n"
+           << conf->name() << "," << conf->desc() << ",\n"
+           << conf->to_string() << "\n]";
         return os;
     }
 };

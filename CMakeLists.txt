@@ -21,6 +21,7 @@ set(LIB_SRC
     src/hook.cc
     src/address.cc
     src/socket.cc
+    src/bytearray.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -62,3 +63,6 @@ target_link_libraries(test_address ${LIBS})
 
 add_executable(test_socket tests/test_socket.cc)
 target_link_libraries(test_socket ${LIBS})
+
+add_executable(test_bytearray tests/test_bytearray.cc)
+target_link_libraries(test_bytearray ${LIBS})

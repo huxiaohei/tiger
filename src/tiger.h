@@ -26,5 +26,6 @@
 #include "time.h"
 #include "uri/uri.h"
 #include "util.h"
+#include "bytearray.h"
 
 #endif
