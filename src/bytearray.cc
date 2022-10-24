@@ -44,21 +44,21 @@ static int64_t Decode_Zigzag64(const uint64_t &v) {
     return (v >> 1) ^ -(v & 1);
 }
 
-Bytearray::Node::Node()
+ByteArray::Node::Node()
     : ptr(nullptr), next(nullptr), size(0) {
 }
 
-Bytearray::Node::Node(size_t s)
+ByteArray::Node::Node(size_t s)
     : ptr(new char[s]), next(nullptr), size(s) {
 }
 
-Bytearray::Node::~Node() {
+ByteArray::Node::~Node() {
     if (ptr) delete[] ptr;
     ptr = nullptr;
     next = nullptr;
 }
 
-Bytearray::Bytearray(size_t base_size)
+ByteArray::ByteArray(size_t base_size)
     : m_base_size(base_size),
       m_position(0),
       m_capacity(0),
@@ -68,7 +68,7 @@ Bytearray::Bytearray(size_t base_size)
       m_cur(m_root) {
 }
 
-Bytearray::~Bytearray() {
+ByteArray::~ByteArray() {
     Node *tmp = m_root;
     while (tmp) {
         m_cur = tmp;
@@ -79,7 +79,7 @@ Bytearray::~Bytearray() {
     m_cur = nullptr;
 }
 
-void Bytearray::add_free_capacity_to(size_t size) {
+void ByteArray::add_free_capacity_to(size_t size) {
     size_t free_cap = get_free_capacity();
     if (free_cap > size) return;
     size -= free_cap;
@@ -99,61 +99,61 @@ void Bytearray::add_free_capacity_to(size_t size) {
     }
 }
 
-void Bytearray::write_fixed_int8(const int8_t &v) {
+void ByteArray::write_fixed_int8(const int8_t &v) {
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_fixed_uint8(const uint8_t &v) {
+void ByteArray::write_fixed_uint8(const uint8_t &v) {
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_fixed_int16(int16_t v) {
+void ByteArray::write_fixed_int16(int16_t v) {
     if (m_endian != __TIGER_BYTE_ORDER) {
         v = byteswap(v);
     }
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_fixed_uint16(uint16_t v) {
+void ByteArray::write_fixed_uint16(uint16_t v) {
     if (m_endian != __TIGER_BYTE_ORDER) {
         v = byteswap(v);
     }
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_fixed_int32(int32_t v) {
+void ByteArray::write_fixed_int32(int32_t v) {
     if (m_endian != __TIGER_BYTE_ORDER) {
         v = byteswap(v);
     }
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_fixed_uint32(uint32_t v) {
+void ByteArray::write_fixed_uint32(uint32_t v) {
     if (m_endian != __TIGER_BYTE_ORDER) {
         v = byteswap(v);
     }
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_fixed_int64(int64_t v) {
+void ByteArray::write_fixed_int64(int64_t v) {
     if (m_endian != __TIGER_BYTE_ORDER) {
         v = byteswap(v);
     }
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_fixed_uint64(uint64_t v) {
+void ByteArray::write_fixed_uint64(uint64_t v) {
     if (m_endian != __TIGER_BYTE_ORDER) {
         v = byteswap(v);
     }
     write(&v, sizeof(v));
 }
 
-void Bytearray::write_int32(int32_t v) {
+void ByteArray::write_int32(int32_t v) {
     write_uint32(Encode_Zigzag32(v));
 }
 
-void Bytearray::write_uint32(uint32_t v) {
+void ByteArray::write_uint32(uint32_t v) {
     uint8_t tmp[5];
     uint8_t i = 0;
     while (v >= 0x80) {
@@ -164,11 +164,11 @@ void Bytearray::write_uint32(uint32_t v) {
     write(tmp, i);
 }
 
-void Bytearray::write_int64(int64_t v) {
+void ByteArray::write_int64(int64_t v) {
     write_uint64(Encode_Zigzag64(v));
 }
 
-void Bytearray::write_uint64(uint64_t v) {
+void ByteArray::write_uint64(uint64_t v) {
     uint8_t tmp[10];
     uint8_t i = 0;
     while (v >= 0x80) {
@@ -179,55 +179,55 @@ void Bytearray::write_uint64(uint64_t v) {
     write(tmp, i);
 }
 
-void Bytearray::write_float(float v) {
+void ByteArray::write_float(float v) {
     uint32_t value = 0;
     memcpy(&value, &v, sizeof(v));
     write_fixed_uint32(value);
 }
 
-void Bytearray::write_double(double v) {
+void ByteArray::write_double(double v) {
     uint64_t value = 0;
     memcpy(&value, &v, sizeof(v));
     write_fixed_uint64(value);
 }
 
-void Bytearray::write_fixed_str16(const std::string &v) {
+void ByteArray::write_fixed_str16(const std::string &v) {
     write_fixed_uint16(v.size());
     write(v.c_str(), v.size());
 }
 
-void Bytearray::write_fixed_str32(const std::string &v) {
+void ByteArray::write_fixed_str32(const std::string &v) {
     write_fixed_uint32(v.size());
     write(v.c_str(), v.size());
 }
 
-void Bytearray::write_fixed_str64(const std::string &v) {
+void ByteArray::write_fixed_str64(const std::string &v) {
     write_fixed_uint64(v.size());
     write(v.c_str(), v.size());
 }
 
-void Bytearray::write_str(const std::string &v) {
+void ByteArray::write_str(const std::string &v) {
     write_uint64(v.size());
     write(v.c_str(), v.size());
 }
 
-void Bytearray::write_str_without_len(const std::string &v) {
+void ByteArray::write_str_without_len(const std::string &v) {
     write(v.c_str(), v.size());
 }
 
-int8_t Bytearray::read_fixed_int8() {
+int8_t ByteArray::read_fixed_int8() {
     int8_t v = 0;
     read(&v, sizeof(v));
     return v;
 }
 
-uint8_t Bytearray::read_fixed_uint8() {
+uint8_t ByteArray::read_fixed_uint8() {
     uint8_t v = 10;
     read(&v, sizeof(v));
     return v;
 }
 
-int16_t Bytearray::read_fixed_int16() {
+int16_t ByteArray::read_fixed_int16() {
     int16_t v = 0;
     read(&v, sizeof(v));
     if (m_endian == __TIGER_BYTE_ORDER) {
@@ -237,7 +237,7 @@ int16_t Bytearray::read_fixed_int16() {
     }
 }
 
-uint16_t Bytearray::read_fixed_uint16() {
+uint16_t ByteArray::read_fixed_uint16() {
     uint16_t v = 0;
     read(&v, sizeof(v));
     if (m_endian == __TIGER_BYTE_ORDER) {
@@ -247,7 +247,7 @@ uint16_t Bytearray::read_fixed_uint16() {
     }
 }
 
-int32_t Bytearray::read_fixed_int32() {
+int32_t ByteArray::read_fixed_int32() {
     int32_t v = 0;
     read(&v, sizeof(v));
     if (m_endian == __TIGER_BYTE_ORDER) {
@@ -257,7 +257,7 @@ int32_t Bytearray::read_fixed_int32() {
     }
 }
 
-uint32_t Bytearray::read_fixed_uint32() {
+uint32_t ByteArray::read_fixed_uint32() {
     uint32_t v = 0;
     read(&v, sizeof(v));
     if (m_endian == __TIGER_BYTE_ORDER) {
@@ -267,7 +267,7 @@ uint32_t Bytearray::read_fixed_uint32() {
     }
 }
 
-int64_t Bytearray::read_fixed_int64() {
+int64_t ByteArray::read_fixed_int64() {
     int64_t v = 0 ;
     read(&v, sizeof(v));
     if (m_endian == __TIGER_BYTE_ORDER) {
@@ -277,7 +277,7 @@ int64_t Bytearray::read_fixed_int64() {
     }
 }
 
-uint64_t Bytearray::read_fixed_uint64() {
+uint64_t ByteArray::read_fixed_uint64() {
     uint64_t v = 0;
     read(&v, sizeof(v));
     if (m_endian == __TIGER_BYTE_ORDER) {
@@ -287,11 +287,11 @@ uint64_t Bytearray::read_fixed_uint64() {
     }
 }
 
-int32_t Bytearray::read_int32() {
+int32_t ByteArray::read_int32() {
     return Decode_Zigzag32(read_uint32());
 }
 
-uint32_t Bytearray::read_uint32() {
+uint32_t ByteArray::read_uint32() {
     uint32_t v = 0;
     for (uint8_t i = 0; i < 32; i += 7) {
         uint8_t b = read_fixed_uint8();
@@ -305,11 +305,11 @@ uint32_t Bytearray::read_uint32() {
     return v;
 }
 
-int64_t Bytearray::read_int64() {
+int64_t ByteArray::read_int64() {
     return Decode_Zigzag64(read_uint64());
 }
 
-uint64_t Bytearray::read_uint64() {
+uint64_t ByteArray::read_uint64() {
     uint64_t v = 0;
     for (uint8_t i = 0; i < 64; i += 7) {
         uint8_t b = read_fixed_int8();
@@ -323,21 +323,21 @@ uint64_t Bytearray::read_uint64() {
     return v;
 }
 
-float Bytearray::read_float() {
+float ByteArray::read_float() {
     uint32_t v = read_fixed_uint32();
     float value = 0.0;
     memcpy(&value, &v, sizeof(v));
     return value;
 }
 
-double Bytearray::read_double() {
+double ByteArray::read_double() {
     uint64_t v = read_fixed_uint64();
     double value = 0.0;
     memcpy(&value, &v, sizeof(v));
     return value;
 }
 
-std::string Bytearray::read_fixed_str16() {
+std::string ByteArray::read_fixed_str16() {
     uint16_t len = read_fixed_uint16();
     std::string buff;
     buff.resize(len);
@@ -345,7 +345,7 @@ std::string Bytearray::read_fixed_str16() {
     return buff;
 }
 
-std::string Bytearray::read_fixed_str32() {
+std::string ByteArray::read_fixed_str32() {
     uint32_t len = read_fixed_uint32();
     std::string buff;
     buff.resize(len);
@@ -353,7 +353,7 @@ std::string Bytearray::read_fixed_str32() {
     return buff;
 }
 
-std::string Bytearray::read_fixed_str64() {
+std::string ByteArray::read_fixed_str64() {
     uint64_t len = read_fixed_uint64();
     std::string buff;
     buff.resize(len);
@@ -361,7 +361,7 @@ std::string Bytearray::read_fixed_str64() {
     return buff;
 }
 
-std::string Bytearray::read_str() {
+std::string ByteArray::read_str() {
     uint64_t len = read_uint64();
     std::string buff;
     buff.resize(len);
@@ -369,7 +369,7 @@ std::string Bytearray::read_str() {
     return buff;
 }
 
-void Bytearray::clear() {
+void ByteArray::clear() {
     m_position = 0;
     m_size = 0;
     m_capacity = m_base_size;
@@ -383,7 +383,7 @@ void Bytearray::clear() {
     m_root->next = nullptr;
 }
 
-void Bytearray::write(const void *buf, size_t size) {
+void ByteArray::write(const void *buf, size_t size) {
     if (size == 0) return;
     add_free_capacity_to(size);
     size_t npos = m_position % m_base_size;
@@ -413,7 +413,7 @@ void Bytearray::write(const void *buf, size_t size) {
     }
 }
 
-bool Bytearray::write_to_file(const std::string &name) const {
+bool ByteArray::write_to_file(const std::string &name) const {
     std::ofstream ofs;
     ofs.open(name, std::ios::trunc | std::ios::binary);
     if (!ofs) {
@@ -442,7 +442,7 @@ bool Bytearray::write_to_file(const std::string &name) const {
     return true;
 }
 
-void Bytearray::read(void *buf, size_t size) {
+void ByteArray::read(void *buf, size_t size) {
     if (size > get_enable_read_size()) {
         throw std::out_of_range("[read out of range]");
     }
@@ -470,7 +470,7 @@ void Bytearray::read(void *buf, size_t size) {
     }
 }
 
-void Bytearray::read(void *buf, size_t size, size_t position) const {
+void ByteArray::read(void *buf, size_t size, size_t position) const {
     if (size > (m_size - position)) {
         throw std::out_of_range("[read not of range]");
     }
@@ -503,7 +503,7 @@ void Bytearray::read(void *buf, size_t size, size_t position) const {
     }
 }
 
-bool Bytearray::read_from_file(const std::string &name) {
+bool ByteArray::read_from_file(const std::string &name) {
     std::ifstream ifs;
     ifs.open(name, std::ios::binary);
     if (!ifs) {
@@ -521,7 +521,7 @@ bool Bytearray::read_from_file(const std::string &name) {
     return true;
 }
 
-std::string Bytearray::to_string() const {
+std::string ByteArray::to_string() const {
     std::string str;
     str.resize(get_enable_read_size());
     if (str.empty()) {
@@ -531,7 +531,7 @@ std::string Bytearray::to_string() const {
     return str;
 }
 
-std::string Bytearray::to_hex_string() const {
+std::string ByteArray::to_hex_string() const {
     const std::string &str = to_string();
     std::stringstream ss;
     for (size_t i = 0; i < str.size(); ++i) {
@@ -544,7 +544,7 @@ std::string Bytearray::to_hex_string() const {
     return ss.str();
 }
 
-size_t Bytearray::get_enable_read_buffers(std::vector<iovec> &buffers, size_t len) const {
+size_t ByteArray::get_enable_read_buffers(std::vector<iovec> &buffers, size_t len) const {
     len = len > get_enable_read_size() ? get_enable_read_size() : len;
     if (len == 0) return 0;
     size_t read_size = len;
@@ -570,7 +570,7 @@ size_t Bytearray::get_enable_read_buffers(std::vector<iovec> &buffers, size_t le
     return read_size;
 }
 
-size_t Bytearray::get_enable_read_buffers(std::vector<iovec> &buffers, size_t len, size_t position) const {
+size_t ByteArray::get_enable_read_buffers(std::vector<iovec> &buffers, size_t len, size_t position) const {
     if (position >= m_size) return 0;
     len = len > (m_size - position) ? (m_size - position) : len;
     if (len == 0) return 0;
@@ -600,7 +600,7 @@ size_t Bytearray::get_enable_read_buffers(std::vector<iovec> &buffers, size_t le
     return read_size;
 }
 
-size_t Bytearray::get_enable_write_buffers(std::vector<iovec> &buffers, size_t len) {
+size_t ByteArray::get_enable_write_buffers(std::vector<iovec> &buffers, size_t len) {
     if (len == 0) return 0;
     add_free_capacity_to(len);
     size_t write_size = len;
@@ -626,11 +626,11 @@ size_t Bytearray::get_enable_write_buffers(std::vector<iovec> &buffers, size_t l
     return write_size;
 }
 
-bool Bytearray::is_little_endian() const {
+bool ByteArray::is_little_endian() const {
     return m_endian == __TIGER_LITTLE_ENDIAN;
 }
 
-void Bytearray::set_position(size_t v) {
+void ByteArray::set_position(size_t v) {
     if (v > m_capacity) {
         throw std::out_of_range("[set position out of range]");
     }
@@ -646,7 +646,7 @@ void Bytearray::set_position(size_t v) {
     }
 }
 
-void Bytearray::set_little_endian(bool v) {
+void ByteArray::set_little_endian(bool v) {
     if (v) {
         m_endian = __TIGER_LITTLE_ENDIAN;
     } else {

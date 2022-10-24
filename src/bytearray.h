@@ -15,7 +15,7 @@
 
 namespace tiger {
 
-class Bytearray {
+class ByteArray {
    private:
     struct Node {
         Node();
@@ -40,10 +40,10 @@ class Bytearray {
     void add_free_capacity_to(size_t size);
 
    public:
-    typedef std::shared_ptr<Bytearray> ptr;
+    typedef std::shared_ptr<ByteArray> ptr;
 
-    Bytearray(size_t base_size = 4096);
-    ~Bytearray();
+    ByteArray(size_t base_size = 4096);
+    ~ByteArray();
 
    public:
     void write_fixed_int8(const int8_t &v);

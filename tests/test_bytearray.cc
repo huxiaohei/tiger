@@ -8,7 +8,7 @@
 #include "../src/tiger.h"
 
 void test_fix_uint() {
-    auto ba = std::make_shared<tiger::Bytearray>(4);
+    auto ba = std::make_shared<tiger::ByteArray>(4);
     ba->write_fixed_uint8(1);
     ba->write_fixed_uint8(255);
     ba->write_fixed_uint16(0);
@@ -51,7 +51,7 @@ void test_fix_uint() {
 }
 
 void test_uint() {
-    auto ba = std::make_shared<tiger::Bytearray>(4);
+    auto ba = std::make_shared<tiger::ByteArray>(4);
     ba->write_uint32(0);    // 1
     ba->write_uint32(255);  // 2
     ba->write_uint32(512);  // 4
@@ -82,7 +82,7 @@ void test_uint() {
 }
 
 void test_fix_int() {
-    auto ba = std::make_shared<tiger::Bytearray>(4);
+    auto ba = std::make_shared<tiger::ByteArray>(4);
     ba->write_fixed_int8(-128);
     ba->write_fixed_int8(127);
     ba->write_fixed_int16(0);
@@ -125,7 +125,7 @@ void test_fix_int() {
 }
 
 void test_int() {
-    auto ba = std::make_shared<tiger::Bytearray>(4);
+    auto ba = std::make_shared<tiger::ByteArray>(4);
     ba->write_int32(0);            // 1
     ba->write_int32(2147483647);   // 5
     ba->write_int32(-2147483648);  // 5
@@ -156,7 +156,7 @@ void test_int() {
 }
 
 void test_float_and_double() {
-    auto ba = std::make_shared<tiger::Bytearray>(4);
+    auto ba = std::make_shared<tiger::ByteArray>(4);
     ba->write_float(3.1415926);
     ba->write_double(3.1415926);
     TIGER_LOG_D(tiger::TEST_LOG) << "[size:" << ba->get_size()
@@ -175,7 +175,7 @@ void test_float_and_double() {
 }
 
 void test_str() {
-    auto ba = std::make_shared<tiger::Bytearray>(4);
+    auto ba = std::make_shared<tiger::ByteArray>(4);
     ba->write_fixed_str16("Hello World 16");  // 2 + 14
     ba->write_fixed_str32("Hello World 32");  // 4 + 14
     ba->write_fixed_str64("Hello World 64");  // 8 + 14
@@ -203,7 +203,7 @@ void test_str() {
 }
 
 void test_file() {
-    auto ba = std::make_shared<tiger::Bytearray>(4);
+    auto ba = std::make_shared<tiger::ByteArray>(4);
     ba->write_str("Hello World");
     ba->set_position(0);
     ba->write_to_file("./bytearry.log");
@@ -217,7 +217,7 @@ int main() {
     uint8_t v = 10;
     std::cout << "v:" << v << std::endl;
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
-    TIGER_LOG_D(tiger::TEST_LOG) << "bytearray test start";
+    TIGER_LOG_D(tiger::TEST_LOG) << "ByteArray test start";
     test_fix_uint();
     test_uint();
     test_fix_int();
@@ -225,6 +225,6 @@ int main() {
     test_float_and_double();
     test_str();
     test_file();
-    TIGER_LOG_D(tiger::TEST_LOG) << "bytearray test end";
+    TIGER_LOG_D(tiger::TEST_LOG) << "ByteArray test end";
     return 0;
 }
