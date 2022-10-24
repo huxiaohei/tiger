@@ -16,7 +16,7 @@
 
 namespace tiger {
 
-class Scheduler {
+class Scheduler: public std::enable_shared_from_this<Scheduler> {
    private:
     struct Task {
         Coroutine::ptr m_co;
@@ -88,7 +88,7 @@ class Scheduler {
     bool has_idel_thread() const { return m_idle_cnt > 0; }
 
    public:
-    static Scheduler *GetThreadScheduler();
+    static Scheduler::ptr GetThreadScheduler();
 
    public:
     virtual void start();

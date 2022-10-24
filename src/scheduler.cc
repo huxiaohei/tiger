@@ -9,9 +9,9 @@
 
 namespace tiger {
 
-static thread_local Scheduler *s_t_scheduler = nullptr;
+static thread_local Scheduler::ptr s_t_scheduler = nullptr;
 
-Scheduler *Scheduler::GetThreadScheduler() {
+Scheduler::ptr Scheduler::GetThreadScheduler() {
     return s_t_scheduler;
 }
 
@@ -65,7 +65,7 @@ void Scheduler::tickle() {
 void Scheduler::run() {
     open_hook();
     auto idle_co = std::make_shared<Coroutine>(std::bind(&Scheduler::idle, this));
-    s_t_scheduler = this;
+    s_t_scheduler = shared_from_this();
     Task task;
     while (true) {
         task.reset();

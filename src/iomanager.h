@@ -24,7 +24,7 @@ class IOManager : public Scheduler, public TimerManager {
    private:
     typedef struct {
         struct EventContext {
-            Scheduler *scheduler;
+            Scheduler::ptr scheduler;
             pid_t thread_id;
             Coroutine::ptr co;
             std::function<void()> cb;
@@ -64,7 +64,7 @@ class IOManager : public Scheduler, public TimerManager {
     ~IOManager();
 
    public:
-    static IOManager *GetThreadIOM();
+    static IOManager::ptr GetThreadIOM();
 
    public:
     bool add_event(int fd, EventStatus status, std::function<void()> cb = nullptr);

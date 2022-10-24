@@ -19,8 +19,8 @@
 
 namespace tiger {
 
-IOManager *IOManager::GetThreadIOM() {
-    return dynamic_cast<IOManager *>(Scheduler::GetThreadScheduler());
+IOManager::ptr IOManager::GetThreadIOM() {
+    return std::dynamic_pointer_cast<IOManager>(Scheduler::GetThreadScheduler());
 }
 
 IOManager::Context::EventContext &IOManager::Context::get_event_context(const EventStatus status) {
