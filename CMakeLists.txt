@@ -7,7 +7,6 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -g -std=c++11 -Wall -Wno-deprecate
 find_library(YAMLCPP yaml-cpp)
 
 set(LIB_SRC
-    src/uri/uri.cc
     src/log.cc
     src/util.cc
     src/config.cc
@@ -25,6 +24,15 @@ set(LIB_SRC
     src/streams/stream.cc
     src/streams/socket_stream.cc
     src/servers/tcp_server.cc
+    src/uri.cc
+    src/servers/http/http_response_parser.cc
+    src/servers/http/http_request_parser.cc
+    src/servers/http/http.cc
+    src/servers/http/http_session.cc
+    src/servers/http/http_parser.cc
+    src/servers/http/http_connection.cc
+    src/servers/http/http_servlet.cc
+    src/servers/http/http_server.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -72,3 +80,9 @@ target_link_libraries(test_bytearray ${LIBS})
 
 add_executable(test_tcpserver tests/test_tcpserver.cc)
 target_link_libraries(test_tcpserver ${LIBS})
+
+add_executable(test_http_parser tests/test_http_parser.cc)
+target_link_libraries(test_http_parser ${LIBS})
+
+add_executable(test_http_connection tests/test_http_connection.cc)
+target_link_libraries(test_http_connection ${LIBS})

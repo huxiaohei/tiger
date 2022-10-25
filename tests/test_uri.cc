@@ -5,10 +5,10 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/uri/uri.h"
+#include "../src/tiger.h"
 
 int main() {
-    tiger::Uri::ptr uri = tiger::Uri::Create("http://baidu.com");
+    tiger::URI::ptr uri = tiger::URI::Create("http://www.baidu.com");
     std::cout << uri << std::endl;
     return 0;
 }

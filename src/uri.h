@@ -1,5 +1,5 @@
 /*****************************************************************
- * Description 
+ * Description
  * Email huxiaoheigame@gmail.com
  * Created on 2022/09/18
  * Copyright (c) 2021 虎小黑
@@ -30,9 +30,11 @@
 #include <sstream>
 #include <string>
 
+#include "address.h"
+
 namespace tiger {
 
-class Uri {
+class URI {
    private:
     std::string m_scheme;
     std::string m_user;
@@ -43,23 +45,32 @@ class Uri {
     std::string m_fragment;
 
    public:
-    typedef std::shared_ptr<Uri> ptr;
+    typedef std::shared_ptr<URI> ptr;
 
-    Uri() : m_port(0){};
-    static Uri::ptr Create(const std::string &uri_str);
+    URI() : m_port(0){};
+    static URI::ptr Create(const std::string &uri_str);
 
-    const std::string &scheme() const { return m_scheme; }
-    const std::string &user() const { return m_user; }
-    const std::string &host() const { return m_host; }
-    const std::string &path() const { return m_host; }
-    const std::string &query() const { return m_query; }
-    const std::string &fragment() const { return m_fragment; }
-    int32_t port() const;
+   public:
+    const std::string &get_scheme() const { return m_scheme; }
+    const std::string &get_user() const { return m_user; }
+    const std::string &get_host() const { return m_host; }
+    const std::string &get_path() const {
+        static std::string s_default_path = "/";
+        return m_path.empty() ? s_default_path : m_path;
+    }
+    const std::string &get_query() const { return m_query; }
+    const std::string &get_fragment() const { return m_fragment; }
+    int32_t get_port() const;
 
     bool is_default_port() const;
-    friend std::ostream &operator<<(std::ostream &os, const Uri &uri);
-    friend std::ostream &operator<<(std::ostream &os, const Uri::ptr uri);
+
+   public:
+    Address::ptr create_address() const;
     std::string to_string() const;
+
+   public:
+    friend std::ostream &operator<<(std::ostream &os, const URI &uri);
+    friend std::ostream &operator<<(std::ostream &os, const URI::ptr uri);
 };
 
 }  // namespace tiger

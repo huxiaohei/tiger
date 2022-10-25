@@ -1,5 +1,7 @@
 /build
-/src/uri/uri.cc
+/src/uri.cc
+/src/http/http_response_parser.cc
+/src/http/http_request_parser.cc
 /bin
 /lib
 .vscode

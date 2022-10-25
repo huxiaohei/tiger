@@ -102,6 +102,11 @@ class Socket : public std::enable_shared_from_this<Socket> {
     friend std::ostream &operator<<(std::ostream &os, const Socket &socket);
 };
 
+class SSLSocket : public Socket {
+   public:
+    typedef std::shared_ptr<SSLSocket> ptr;
+};
+
 }  // namespace tiger
 
 #endif

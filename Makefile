@@ -1,8 +1,11 @@
 .PHONY: xx
 
 "":
-	cd src/uri && ragel uri.rl -o uri.cc; \
-	cd ../..; \
+	cd src && ragel uri.rl -o uri.cc; \
+	cd ..; \
+	cd src/servers/http && ragel http_response_parser.rl -o http_response_parser.cc; \
+	ragel http_request_parser.rl -o http_request_parser.cc; \
+	cd ../../..; \
 	if [ -d "build" ]; then \
 		cd build && make -j4; \
 	else \

@@ -110,8 +110,8 @@ namespace tiger {
     write data;
 }%%
 
-Uri::ptr Uri::Create(const std::string& uri_str) {
-    Uri::ptr uri = std::make_shared<Uri>();
+URI::ptr URI::Create(const std::string& uri_str) {
+    auto uri = std::make_shared<URI>();
     int cs = 0;
     %% write init;
     const char *mark = 0;
@@ -127,40 +127,47 @@ Uri::ptr Uri::Create(const std::string& uri_str) {
     return nullptr;
 }
 
+Address::ptr URI::create_address() const {
+    auto addr = IPAddress::LookupAny(m_host);
+    if (addr) {
+        addr->set_port(get_port());
+    }
+    return addr;
+}
 
-int32_t Uri::port() const {
+int32_t URI::get_port() const {
     if (m_port) return m_port;
     if (m_scheme == "wss" || m_scheme == "https") return 443;
     if (m_scheme == "ws" || m_scheme == "http") return 80;
     return m_port;
 }
 
-bool Uri::is_default_port() const {
+bool URI::is_default_port() const {
     if (m_port == 0) return true;
     if (m_scheme == "wss" || m_scheme == "https") return m_port == 80;
     if (m_scheme == "ws" || m_scheme == "http") return m_port == 443;
     return false;
 }
 
-std::ostream& operator<<(std::ostream& os, const Uri& uri) {
+std::ostream& operator<<(std::ostream& os, const URI& uri) {
     os << uri.m_scheme << "://"
        << uri.m_user << (uri.m_user.empty() ? "" : "@")
-       << uri.m_host << (uri.is_default_port() ? "" : std::to_string(uri.m_port))
+       << uri.m_host << (uri.is_default_port() ? "" : (":" + std::to_string(uri.m_port)))
        << uri.m_path << (uri.m_query.empty() ? "" : "?") << uri.m_query
        << (uri.m_fragment.empty() ? "" : "#") << uri.m_fragment;
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const Uri::ptr uri) {
+std::ostream& operator<<(std::ostream& os, const URI::ptr uri) {
     os << uri->m_scheme << "://"
        << uri->m_user << (uri->m_user.empty() ? "" : "@")
-       << uri->m_host << (uri->is_default_port() ? "" : std::to_string(uri->m_port))
+       << uri->m_host << (uri->is_default_port() ? "" : (":" + std::to_string(uri->m_port)))
        << uri->m_path << (uri->m_query.empty() ? "" : "?") << uri->m_query
        << (uri->m_fragment.empty() ? "" : "#") << uri->m_fragment;
     return os;
 }
 
-std::string Uri::to_string() const {
+std::string URI::to_string() const {
     std::stringstream ss;
     ss << this;
     return ss.str();

@@ -28,7 +28,7 @@
 #include "streams/stream.h"
 #include "thread.h"
 #include "time.h"
-#include "uri/uri.h"
+#include "uri.h"
 #include "util.h"
 
 #endif
