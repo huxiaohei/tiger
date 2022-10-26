@@ -86,3 +86,6 @@ target_link_libraries(test_http_parser ${LIBS})
 
 add_executable(test_http_connection tests/test_http_connection.cc)
 target_link_libraries(test_http_connection ${LIBS})
+
+add_executable(test_http_server tests/test_http_server.cc)
+target_link_libraries(test_http_server ${LIBS})
