@@ -5,7 +5,9 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
+#include "../src/macro.h"
 #include "../src/servers/http/http_connection.h"
+#include "../src/thread.h"
 
 void test_http_result() {
     auto rsp = std::make_shared<tiger::http::HTTPResponse>();
@@ -50,8 +52,11 @@ void test_http_connection_pool() {
 
 int main(int argc, char **argv) {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
-    // test_http_result();
+    tiger::Thread::SetName("HTTP_CONNECTION");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[http_connection test start]";
+    test_http_result();
     // test_http_connection();
     test_http_connection_pool();
+    TIGER_LOG_D(tiger::TEST_LOG) << "[http_connection test end]";
     return 0;
 }

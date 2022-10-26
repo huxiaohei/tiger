@@ -17,21 +17,20 @@
 #include <vector>
 
 #include "coroutine.h"
-#include "env.h"
 #include "mutex.h"
 #include "singleton.h"
 #include "thread.h"
 #include "util.h"
 
-#define TIGER_LOG_LEVEL(logger, level)                                                                                                            \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                        \
+#define TIGER_LOG_LEVEL(logger, level)                                                                                                                                             \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                         \
                             logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Second(), tiger::Thread::CurThreadName())) \
         .ss()
 
-#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                                              \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                        \
+#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                                                                               \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                         \
                             logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Second(), tiger::Thread::CurThreadName())) \
-        .event()                                                                                                                                  \
+        .event()                                                                                                                                                                   \
         ->format(fmt, __VA_ARGS__);
 
 #define TIGER_LOG_DEBUG(logger) TIGER_LOG_LEVEL(logger, tiger::LogLevel::DEBUG)
@@ -189,9 +188,7 @@ class LogAppender {
    protected:
     LogFormatter::ptr m_formatter;
     LogLevel::Level m_level;
-#ifdef __TIGER_MULTI_THREAD__
     SpinLock m_lock;
-#endif
 
    public:
     typedef std::shared_ptr<LogAppender> ptr;
@@ -238,9 +235,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
     std::string m_name;
     LogLevel::Level m_level;
     std::list<LogAppender::ptr> m_appenders;
-#ifdef __TIGER_MULTI_THREAD__
     SpinLock m_lock;
-#endif
 
    public:
     typedef std::shared_ptr<Logger> ptr;
@@ -265,9 +260,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
 class LoggerMgr {
    private:
     std::unordered_map<std::string, Logger::ptr> m_logger_map;
-#ifdef __TIGER_MULTI_THREAD__
     SpinLock m_lock;
-#endif
 
    public:
     LoggerMgr();

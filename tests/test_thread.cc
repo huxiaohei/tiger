@@ -5,7 +5,9 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/tiger.h"
+#include "../src/hook.h"
+#include "../src/macro.h"
+#include "../src/thread.h"
 
 void thread_callback() {
     TIGER_LOG_D(tiger::TEST_LOG) << "thread_callback start";
@@ -25,7 +27,7 @@ void test_create_threads(size_t count) {
 
 void test_thread_cond() {
     std::vector<tiger::Thread::ptr> v;
-    
+
     pthread_cond_t cond;
     pthread_cond_init(&cond, nullptr);
     pthread_mutex_t mutex;
@@ -55,9 +57,10 @@ void test_thread_cond() {
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
-    TIGER_LOG_D(tiger::TEST_LOG) << "thread start";
+    tiger::Thread::SetName("THREAD");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[test thread start]";
     test_create_threads(10);
     test_thread_cond();
-    TIGER_LOG_D(tiger::TEST_LOG) << "thread end";
+    TIGER_LOG_D(tiger::TEST_LOG) << "[test thread end]";
     return 0;
 }

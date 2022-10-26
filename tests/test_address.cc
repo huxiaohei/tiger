@@ -5,7 +5,9 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/tiger.h"
+#include "../src/address.h"
+#include "../src/macro.h"
+#include "../src/thread.h"
 
 void test_lookup() {
     TIGER_LOG_D(tiger::TEST_LOG) << "test lookup start";
@@ -41,11 +43,11 @@ void test_iface() {
     }
     for (auto it : rts) {
         TIGER_LOG_D(tiger::TEST_LOG) << "[name:" << it.first
-                                     << " ip:" << it.second.first
+                                     << " ip:" << it.second.first->to_string()
                                      << " prefixlen:" << it.second.second
-                                     << " subnetmask:" << it.second.first->subnet_mask(it.second.second)
-                                     << " networkAddress:" << it.second.first->network_address(it.second.second)
-                                     << " broadcastAddress:" << it.second.first->broadcast_address(it.second.second) << "]";
+                                     << " subnetmask:" << it.second.first->subnet_mask(it.second.second)->to_string()
+                                     << " networkAddress:" << it.second.first->network_address(it.second.second)->to_string()
+                                     << " broadcastAddress:" << it.second.first->broadcast_address(it.second.second)->to_string() << "]";
     }
     std::vector<std::pair<tiger::IPAddress::ptr, uint32_t>> lo_rts;
     if (!tiger::IPAddress::InterfaceAddresses(lo_rts, "lo", AF_INET)) {
@@ -53,20 +55,21 @@ void test_iface() {
     }
     for (auto it : lo_rts) {
         TIGER_LOG_D(tiger::TEST_LOG) << "[name:lo"
-                                     << " ip:" << it.first
+                                     << " ip:" << it.first->to_string()
                                      << " prefixlen:" << it.second
-                                     << " subnetmask:" << it.first->subnet_mask(it.second)
-                                     << " networkAddress:" << it.first->network_address(it.second)
-                                     << " broadcastAddress:" << it.first->broadcast_address(it.second) << "]";
+                                     << " subnetmask:" << it.first->subnet_mask(it.second)->to_string()
+                                     << " networkAddress:" << it.first->network_address(it.second)->to_string()
+                                     << " broadcastAddress:" << it.first->broadcast_address(it.second)->to_string() << "]";
     }
     TIGER_LOG_D(tiger::TEST_LOG) << "test iface end";
 }
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
-    TIGER_LOG_D(tiger::TEST_LOG) << "address test start";
+    tiger::Thread::SetName("ADDRESS");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[address test start]";
     test_lookup();
     test_iface();
-    TIGER_LOG_D(tiger::TEST_LOG) << "address test end";
+    TIGER_LOG_D(tiger::TEST_LOG) << "[address test end]";
     return 0;
 }

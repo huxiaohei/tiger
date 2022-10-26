@@ -5,7 +5,9 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/tiger.h"
+#include "../src/iomanager.h"
+#include "../src/macro.h"
+#include "../src/socket.h"
 
 void test_socket_send(const std::string &host, tiger::IOManager::ptr iom) {
     tiger::IPAddress::ptr addr = tiger::IPAddress::LookupAny(host);
@@ -36,9 +38,10 @@ void test_socket_send(const std::string &host, tiger::IOManager::ptr iom) {
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
-    TIGER_LOG_D(tiger::TEST_LOG) << "socket test start";
-    tiger::IOManager::ptr iom = std::make_shared<tiger::IOManager>("TEST_SOCKET", true, 1);
+    tiger::Thread::SetName("Socket");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[socket test start]";
+    tiger::IOManager::ptr iom = std::make_shared<tiger::IOManager>("Socket", true, 1);
     iom->schedule(std::bind(test_socket_send, "www.baidu.com:80", iom));
     iom->start();
-    TIGER_LOG_D(tiger::TEST_LOG) << "socket test end";
+    TIGER_LOG_D(tiger::TEST_LOG) << "[socket test end]";
 }

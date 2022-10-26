@@ -59,7 +59,9 @@ void test_parser_response() {
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
+    tiger::Thread::SetName("HTTP_PARSER");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[http_parser test start]";
     test_parser_request();
-    TIGER_LOG_D(tiger::TEST_LOG) << "========================";
     test_parser_response();
+    TIGER_LOG_D(tiger::TEST_LOG) << "[http_parser test end]";
 }

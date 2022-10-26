@@ -5,7 +5,9 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/tiger.h"
+#include "../src/bytearray.h"
+#include "../src/macro.h"
+#include "../src/thread.h"
 
 void test_fix_uint() {
     auto ba = std::make_shared<tiger::ByteArray>(4);
@@ -214,10 +216,9 @@ void test_file() {
 }
 
 int main() {
-    uint8_t v = 10;
-    std::cout << "v:" << v << std::endl;
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
-    TIGER_LOG_D(tiger::TEST_LOG) << "ByteArray test start";
+    tiger::Thread::SetName("BYTE_ARRAY");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[bytearray test start]";
     test_fix_uint();
     test_uint();
     test_fix_int();
@@ -225,6 +226,6 @@ int main() {
     test_float_and_double();
     test_str();
     test_file();
-    TIGER_LOG_D(tiger::TEST_LOG) << "ByteArray test end";
+    TIGER_LOG_D(tiger::TEST_LOG) << "[bytearray test end]";
     return 0;
 }

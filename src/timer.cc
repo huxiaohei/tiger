@@ -39,9 +39,7 @@ TimerManager::~TimerManager() {
 
 TimerManager::Timer::ptr TimerManager::add_timer(time_t interval, std::function<void()> cb, bool loop) {
     auto timer = std::make_shared<Timer>(interval, loop, cb);
-#ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::WriteLock lock(m_lock);
-#endif
     m_timers.insert(timer);
     if (m_timers.begin() == m_timers.find(timer)) {
         on_timer_refresh();
@@ -67,17 +65,13 @@ TimerManager::Timer::ptr TimerManager::add_cond_timer(time_t interval, std::func
 }
 
 bool TimerManager::is_valid_timer(Timer::ptr timer) {
-#ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::ReadLock lock(m_lock);
-#endif
     return !(m_timers.find(timer) == m_timers.end());
 }
 
 void TimerManager::reset_timer(Timer::ptr timer, time_t interval) {
     if (timer->m_interval == interval) return;
-#ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::WriteLock lock(m_lock);
-#endif
     timer->m_interval = interval;
     if (m_timers.find(timer) == m_timers.end()) {
         m_timers.insert(timer);
@@ -91,9 +85,7 @@ void TimerManager::reset_timer(Timer::ptr timer, time_t interval) {
 }
 
 bool TimerManager::cancel_timer(Timer::ptr timer) {
-#ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::WriteLock lock(m_lock);
-#endif
     if (!timer) return false;
     if (m_timers.find(timer) == m_timers.end()) {
         return false;
@@ -108,9 +100,7 @@ bool TimerManager::cancel_timer(Timer::ptr timer) {
 }
 
 void TimerManager::cancel_all_timer() {
-#ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::WriteLock lock(m_lock);
-#endif
     while (m_timers.begin() != m_timers.end()) {
         (*m_timers.begin())->m_cb = nullptr;
         m_timers.erase(m_timers.begin());
@@ -119,9 +109,7 @@ void TimerManager::cancel_all_timer() {
 }
 
 time_t TimerManager::next_timer_left_time() {
-#ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::ReadLock lock(m_lock);
-#endif
     if (m_timers.empty()) return ~0;
     auto n_ms = Millisecond();
     if (n_ms >= (*m_timers.begin())->m_next_time) {
@@ -133,14 +121,10 @@ time_t TimerManager::next_timer_left_time() {
 
 void TimerManager::all_expired_cbs(std::vector<std::function<void()>> &cbs) {
     {
-#ifdef __TIGER_MULTI_THREAD__
         ReadWriteLock::ReadLock lock(m_lock);
-#endif
         if (m_timers.empty()) return;
     }
-#ifdef __TIGER_MULTI_THREAD__
     ReadWriteLock::WriteLock lock(m_lock);
-#endif
     auto n_ms = Millisecond();
     std::vector<TimerManager::Timer::ptr> expired_timers;
     for (auto &timer : m_timers) {

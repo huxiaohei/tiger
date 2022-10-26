@@ -50,7 +50,8 @@ struct HTTPResult {
         std::stringstream ss;
         ss << "[errCode:" << err_code
            << " errDes:" << err_des
-           << " rsp:[\n" << rsp->to_string() << "\n]]";
+           << " rsp:[\n"
+           << rsp->to_string() << "\n]]";
         return ss.str();
     }
 };

@@ -17,8 +17,8 @@
 #include <string>
 #include <vector>
 
-#include "../../macro.h"
 #include "../../const.h"
+#include "../../macro.h"
 
 namespace tiger {
 

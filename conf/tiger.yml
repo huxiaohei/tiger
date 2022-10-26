@@ -29,3 +29,8 @@ servers:
   tcp:
     acceptTimeout: 10000
     recvTimeout: 6000
+  http:
+    requestBufferSize: 4096
+    requestMaxBodySize: 6291456
+    responseBufferSize: 4096
+    responseMaxBodySize: 6291456

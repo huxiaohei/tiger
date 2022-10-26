@@ -10,13 +10,12 @@
 
 #include <atomic>
 
-#include "env.h"
 #include "macro.h"
 #include "mutex.h"
 
 namespace tiger {
 
-class Scheduler: public std::enable_shared_from_this<Scheduler> {
+class Scheduler : public std::enable_shared_from_this<Scheduler> {
    private:
     struct Task {
         Coroutine::ptr m_co;
@@ -100,9 +99,7 @@ class Scheduler: public std::enable_shared_from_this<Scheduler> {
         if (m_is_stopping) return false;
         bool need_tickle = false;
         {
-#ifdef __TIGER_MULTI_THREAD__
             MutexLock::Lock lock(m_mutex);
-#endif
             need_tickle = m_tasks.empty();
             m_tasks.push_back(Task(v, thread_id));
         }
@@ -117,9 +114,7 @@ class Scheduler: public std::enable_shared_from_this<Scheduler> {
         if (m_is_stopping) return false;
         bool need_tickle = false;
         {
-#ifdef __TIGER_MULTI_THREAD__
             MutexLock::Lock lock(m_mutex);
-#endif
             need_tickle = m_tasks.empty();
             while (begin != end) {
                 m_tasks.push_back(Task(*begin, thread_id));

@@ -5,7 +5,7 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/tiger.h"
+#include "../src/servers/tcp_server.h"
 
 void run() {
     auto addr = tiger::Address::LookupAny("0.0.0.0:8035");
@@ -16,10 +16,11 @@ void run() {
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
-    TIGER_LOG_D(tiger::TEST_LOG) << "tcp_server test start";
+    tiger::Thread::SetName("IOM");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[tcp_server test start]";
     auto iom = std::make_shared<tiger::IOManager>("IOM", true, 1);
     iom->schedule(run);
     iom->start();
-    TIGER_LOG_D(tiger::TEST_LOG) << "tcp_server test start";
+    TIGER_LOG_D(tiger::TEST_LOG) << "[tcp_server test end]";
     return 0;
 }

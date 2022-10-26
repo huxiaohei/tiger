@@ -9,8 +9,9 @@
 #define __TIGER_COROUTINE_H__
 
 #include <ucontext.h>
-#include <memory>
+
 #include <functional>
+#include <memory>
 
 namespace tiger {
 

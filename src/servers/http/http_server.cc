@@ -8,6 +8,7 @@
 #include "http_server.h"
 
 namespace tiger {
+
 namespace http {
 
 HTTPServer::HTTPServer(bool keepalive,
@@ -23,8 +24,8 @@ void HTTPServer::handle_client(Socket::ptr client) {
         if (!req) {
             if (errno == ETIMEDOUT) {
                 TIGER_LOG_I(SYSTEM_LOG) << "[connection timeout "
-                                           << " localAddr:" << client->get_local_addr()
-                                           << " remoteAddr:" << client->get_remote_addr() << "]";
+                                        << " localAddr:" << client->get_local_addr()
+                                        << " remoteAddr:" << client->get_remote_addr() << "]";
 
             } else {
                 TIGER_LOG_W(SYSTEM_LOG) << "[recv fail"

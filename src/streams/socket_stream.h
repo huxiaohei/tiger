@@ -8,9 +8,9 @@
 #ifndef __TIGER_SOCKET_STREAM_H__
 #define __TIGER_SOCKET_STREAM_H__
 
+#include "../iomanager.h"
 #include "../mutex.h"
 #include "../socket.h"
-#include "../iomanager.h"
 #include "stream.h"
 
 namespace tiger {

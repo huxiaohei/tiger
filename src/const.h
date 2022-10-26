@@ -15,6 +15,6 @@ namespace tiger {
 const std::string SYSTEM_LOG = "SYSTEM";
 const std::string TEST_LOG = "TEST";
 
-}
+}  // namespace tiger
 
 #endif

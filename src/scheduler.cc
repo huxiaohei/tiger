@@ -33,9 +33,7 @@ Scheduler::~Scheduler() {
 
 void Scheduler::start() {
     {
-#ifdef __TIGER_MULTI_THREAD__
         MutexLock::Lock lock(m_mutex);
-#endif
         if (!m_is_stopped || m_is_stopping) {
             return;
         }
@@ -72,9 +70,7 @@ void Scheduler::run() {
         bool is_active = false;
         bool need_tickle = false;
         {
-#ifdef __TIGER_MULTI_THREAD__
             MutexLock::Lock lock(m_mutex);
-#endif
             auto t = m_tasks.begin();
             while (t != m_tasks.end()) {
                 if (t->m_thread_id != 0 && t->m_thread_id != Thread::CurThreadId()) {

@@ -14,13 +14,13 @@ namespace http {
 HTTPConnection::HTTPConnection(Socket::ptr sock, bool owner)
     : SocketStream(sock, owner) {
     m_create_time = Millisecond();
-    TIGER_LOG_I(SYSTEM_LOG) << "[liuhu connection construct"
+    TIGER_LOG_I(SYSTEM_LOG) << "[connection construct"
                             << " create:" << m_create_time
                             << " socket:" << get_socket() << "]";
 }
 
 HTTPConnection::~HTTPConnection() {
-    TIGER_LOG_I(SYSTEM_LOG) << "[liuhu connection destroy"
+    TIGER_LOG_I(SYSTEM_LOG) << "[connection destroy"
                             << " create:" << m_create_time
                             << " socket:" << get_socket() << "]";
 }

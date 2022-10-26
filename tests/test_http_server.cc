@@ -43,7 +43,10 @@ void run() {
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
+    tiger::Thread::SetName("HTTP_SERVER");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[http_server test start]";
     auto iom = std::make_shared<tiger::IOManager>("HTTP_SERVER", true, 2);
     iom->schedule(&run);
     iom->start();
+    TIGER_LOG_D(tiger::TEST_LOG) << "[http_server test end]";
 }

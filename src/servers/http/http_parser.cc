@@ -13,10 +13,10 @@ namespace tiger {
 
 namespace http {
 
-static ConfigVar<uint64_t>::ptr g_http_request_buffer_size = Config::Lookup<uint64_t>("http.request.bufferSize", 4 * 1024, "HTTP request buffer size");
-static ConfigVar<uint64_t>::ptr g_http_request_max_body_size = Config::Lookup<uint64_t>("http.request.maxBodySize", 64 * 1024 * 1024, "HTTP request max body size");
-static ConfigVar<uint64_t>::ptr g_http_response_buffer_size = Config::Lookup<uint64_t>("http.response.bufferSize", 4 * 1024, "HTTP response buffer size");
-static ConfigVar<uint64_t>::ptr g_http_response_max_body_size = Config::Lookup<uint64_t>("http.response.maxBodySize", 64 * 1024 * 1024, "HTTP response max body size");
+static ConfigVar<uint64_t>::ptr g_http_request_buffer_size = Config::Lookup<uint64_t>("tiger.servers.http.requestBufferSize", 4 * 1024, "HTTP request buffer size");
+static ConfigVar<uint64_t>::ptr g_http_request_max_body_size = Config::Lookup<uint64_t>("tiger.servers.http.requestMaxBodySize", 64 * 1024 * 1024, "HTTP request max body size");
+static ConfigVar<uint64_t>::ptr g_http_response_buffer_size = Config::Lookup<uint64_t>("tiger.servers.http.responseBufferSize", 4 * 1024, "HTTP response buffer size");
+static ConfigVar<uint64_t>::ptr g_http_response_max_body_size = Config::Lookup<uint64_t>("tiger.servers.http.responseMaxBodySize", 64 * 1024 * 1024, "HTTP response max body size");
 
 void on_request_method(void *data, const char *at, size_t length) {
     HTTPRequestParser *parser = static_cast<HTTPRequestParser *>(data);

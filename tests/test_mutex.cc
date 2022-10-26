@@ -5,7 +5,10 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/tiger.h"
+#include <unistd.h>
+
+#include "../src/macro.h"
+#include "../src/mutex.h"
 
 void multi_threads_exec(size_t count,
                         const std::string &name,
@@ -85,7 +88,7 @@ void test_read_lock() {
         TIGER_LOG_D(tiger::TEST_LOG) << "test_read_lock suc:" << suc;
     } else {
         TIGER_LOG_E(tiger::TEST_LOG) << "test_read_lock fail:" << suc;
-        throw std::runtime_error("test_read_lock error");
+        throw std::logic_error("test_read_lock error");
     }
 }
 
@@ -108,10 +111,14 @@ void test_write_lock() {
 }
 
 int main() {
+    tiger::SingletonLoggerMgr::Instance()->add_loggers("log", "../conf/tiger.yml");
+    tiger::Thread::SetName("MUTEX");
+    TIGER_LOG_D(tiger::TEST_LOG) << "[test mutex start]";
     test_no_lock();
     test_spin_lock();
     test_mutex_lock();
     test_read_lock();
     test_write_lock();
+    TIGER_LOG_D(tiger::TEST_LOG) << "[test mutex end]";
     return 0;
 }
