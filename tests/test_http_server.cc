@@ -5,48 +5,52 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#include "../src/servers/http/http_server.h"
+#include "../src/tiger.h"
 
-void run() {
-    auto server = std::make_shared<tiger::http::HTTPServer>();
-    auto addr = tiger::IPAddress::LookupAny("0.0.0.0:8080");
-    if (!server->bind(addr)) {
-        TIGER_LOG_E(tiger::TEST_LOG) << "[bind error "
-                                     << addr << "]";
-        return;
+class Hello : public tiger::http::Servlet {
+   public:
+    int32_t handle(tiger::http::HTTPRequest::ptr request,
+                   tiger::http::HTTPResponse::ptr response,
+                   tiger::http::HTTPSession::ptr session) override {
+        response->set_body("Hello! I'm tiger!");
+        return 0;
     }
-    auto dsp = server->get_servlet_dispatch();
-    dsp->add_servlet("/hello", [](tiger::http::HTTPRequest::ptr req,
-                                  tiger::http::HTTPResponse::ptr rsp,
-                                  tiger::http::HTTPSession::ptr session) {
-        TIGER_LOG_D(tiger::TEST_LOG) << "hello " << req;
-        rsp->set_body("Hello I'm tiger!");
-        rsp->set_header("result", "ok");
-        rsp->set_cookies("cookies", "tiger");
-        TIGER_LOG_D(tiger::TEST_LOG) << "hello " << rsp;
-        return 0;
-    });
+};
 
-    dsp->add_servlet("/bye", [](tiger::http::HTTPRequest::ptr req,
-                                tiger::http::HTTPResponse::ptr rsp,
-                                tiger::http::HTTPSession::ptr session) {
-        TIGER_LOG_D(tiger::TEST_LOG) << "hello " << req;
-        rsp->set_body("Bye I'm tiger!");
-        rsp->set_header("result", "ok");
-        rsp->set_cookies("cookies", "tiger");
-        TIGER_LOG_D(tiger::TEST_LOG) << "hello " << rsp;
-        tiger::IOManager::GetThreadIOM()->stop();
+class Bye : public tiger::http::Servlet {
+   public:
+    int32_t handle(tiger::http::HTTPRequest::ptr request,
+                   tiger::http::HTTPResponse::ptr response,
+                   tiger::http::HTTPSession::ptr session) override {
+        response->set_body("Bye!");
         return 0;
-    });
-    server->start();
-}
+    }
+};
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("HTTP_SERVER");
     TIGER_LOG_D(tiger::TEST_LOG) << "[http_server test start]";
-    auto iom = std::make_shared<tiger::IOManager>("HTTP_SERVER", true, 2);
-    iom->schedule(&run);
+
+    auto iom = std::make_shared<tiger::IOManager>("HTTP_SERVER", true, 1);
+    iom->schedule([]() {
+        auto server = std::make_shared<tiger::http::HTTPServer>();
+        auto addr = tiger::IPAddress::LookupAny("0.0.0.0:8080");
+        server->bind(addr);
+        auto dsp = server->get_servlet_dispatch();
+        dsp->add_servlet("/hello", std::make_shared<Hello>());
+        dsp->add_servlet("/bye", std::make_shared<Bye>());
+        dsp->add_servlet(
+            "/close", [server](tiger::http::HTTPRequest::ptr request,
+                               tiger::http::HTTPResponse::ptr response,
+                               tiger::http::HTTPSession::ptr session) {
+                server->stop();
+                tiger::IOManager::GetThreadIOM()->stop();
+                return 0;
+            });
+        server->start();
+    });
     iom->start();
+
     TIGER_LOG_D(tiger::TEST_LOG) << "[http_server test end]";
 }

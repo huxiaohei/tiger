@@ -69,14 +69,14 @@ target_link_libraries(test_socket ${LIBS})
 add_executable(test_bytearray tests/test_bytearray.cc)
 target_link_libraries(test_bytearray ${LIBS})
 
-add_executable(test_tcpserver tests/test_tcpserver.cc)
-target_link_libraries(test_tcpserver ${LIBS})
-
 add_executable(test_http_parser tests/test_http_parser.cc)
 target_link_libraries(test_http_parser ${LIBS})
 
 add_executable(test_http_connection tests/test_http_connection.cc)
 target_link_libraries(test_http_connection ${LIBS})
+
+add_executable(test_tcp_server tests/test_tcp_server.cc)
+target_link_libraries(test_tcp_server ${LIBS})
 
 add_executable(test_http_server tests/test_http_server.cc)
 target_link_libraries(test_http_server ${LIBS})
