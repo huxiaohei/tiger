@@ -14,6 +14,7 @@
 #include "macro.h"
 #include "mutex.h"
 #include "servers/http/http_server.h"
+#include "servers/http/http_servlet.h"
 #include "servers/tcp_server.h"
 #include "singleton.h"
 #include "thread.h"

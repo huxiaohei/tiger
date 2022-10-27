@@ -13,7 +13,7 @@ namespace tiger {
 
 namespace http {
 
-Servlet::Servlet(const std::string name)
+Servlet::Servlet(const std::string &name)
     : m_name(name) {
 }
 

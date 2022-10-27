@@ -27,7 +27,7 @@ class Servlet {
     typedef std::shared_ptr<Servlet> ptr;
     typedef std::function<int32_t(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session)> Callback;
 
-    Servlet(const std::string name);
+    Servlet(const std::string &name="");
     virtual ~Servlet(){};
 
    public:
