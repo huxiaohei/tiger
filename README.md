@@ -46,7 +46,9 @@ int main() {
     iom->schedule([]() {
         auto server = std::make_shared<tiger::http::HTTPServer>();
         auto addr = tiger::IPAddress::LookupAny("0.0.0.0:8080");
-        server->bind(addr);
+        auto ssl_addr = tiger::IPAddress::LookupAny("0.0.0.0:8081");
+        server->bind(addr, false);
+        server->bind(ssl_addr, true);
         auto dsp = server->get_servlet_dispatch();
         dsp->add_servlet("/hello", std::make_shared<Hello>());
         dsp->add_servlet("/bye", std::make_shared<Bye>());
@@ -58,6 +60,7 @@ int main() {
                 tiger::IOManager::GetThreadIOM()->stop();
                 return 0;
             });
+        server->load_certificates("./tiger.crt", "./tiger.key");
         server->start();
     });
     iom->start();
