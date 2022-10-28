@@ -222,7 +222,7 @@ int8_t ByteArray::read_fixed_int8() {
 }
 
 uint8_t ByteArray::read_fixed_uint8() {
-    uint8_t v = 10;
+    uint8_t v = 0;
     read(&v, sizeof(v));
     return v;
 }
