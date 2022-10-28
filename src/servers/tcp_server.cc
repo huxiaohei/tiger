@@ -30,17 +30,17 @@ TCPServer::~TCPServer() {
     m_sockets.clear();
 }
 
-bool TCPServer::bind(Address::ptr addr) {
+bool TCPServer::bind(Address::ptr addr, bool is_ssl) {
     std::vector<Address::ptr> addrs;
     std::vector<Address::ptr> fails;
     addrs.push_back(addr);
-    return bind(addrs, fails);
+    return bind(addrs, fails, is_ssl);
 }
 
 bool TCPServer::bind(const std::vector<Address::ptr> &addrs,
-                     std::vector<Address::ptr> &fails) {
+                     std::vector<Address::ptr> &fails, bool is_ssl) {
     for (auto &addr : addrs) {
-        Socket::ptr socket = Socket::CreateTCP(addr);
+        Socket::ptr socket = is_ssl ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
         if (!socket->bind(addr)) {
             TIGER_LOG_E(SYSTEM_LOG) << "[bind fail"
                                     << " addr:" << addr
@@ -96,6 +96,17 @@ void TCPServer::stop() {
         }
         m_sockets.clear();
     });
+}
+
+bool TCPServer::load_certificates(const std::string &cert_file, const std::string &key_file) {
+    bool rst = true;
+    for (auto &it : m_sockets) {
+        auto ssl_socket = std::dynamic_pointer_cast<SSLSocket>(it);
+        if (ssl_socket) {
+            rst = ssl_socket->load_certificates(cert_file, key_file) ? rst : false;
+        }
+    }
+    return rst;
 }
 
 void TCPServer::handle_client(Socket::ptr client) {

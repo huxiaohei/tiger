@@ -9,6 +9,8 @@
 #define __TIGER_SOCKET_H__
 
 #include <netinet/tcp.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "address.h"
 
@@ -72,7 +74,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
     bool get_option(int level, int optname, void *optval, socklen_t *optlen);
     bool set_option(int level, int optname, const void *optval, socklen_t optlen);
 
-    virtual bool connect(const Address::ptr addr, uint16_t timeout_ms = -1);
+    virtual bool connect(const Address::ptr addr, uint64_t timeout_ms = -1);
     virtual bool reconnect(const uint64_t timeout_ms = -1);
 
     virtual bool bind(const Address::ptr addr);
@@ -92,6 +94,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
     virtual int recv_from(void *buffer, size_t len, Address::ptr from, int flags = 0);
     virtual int recv_from(iovec *buffers, size_t len, Address::ptr from, int flags = 0);
 
+   public:
     bool cancel_read();
     bool cancel_write();
     bool cancel_accept();
@@ -103,8 +106,50 @@ class Socket : public std::enable_shared_from_this<Socket> {
 };
 
 class SSLSocket : public Socket {
+   private:
+    std::shared_ptr<SSL_CTX> m_ctx;
+    std::shared_ptr<SSL> m_ssl;
+
+   protected:
+    virtual bool init(int sock) override;
+
    public:
     typedef std::shared_ptr<SSLSocket> ptr;
+
+    SSLSocket(int family, int type, int protocol = 0);
+    virtual ~SSLSocket();
+
+   public:
+    static Socket::ptr CreateTCP(tiger::Address::ptr address);
+    static Socket::ptr CreateTCPSocket();
+    static Socket::ptr CreateTCPSocket6();
+
+   public:
+    virtual bool connect(const Address::ptr addr, uint64_t timeout_ms = -1) override;
+
+    virtual bool bind(const Address::ptr addr) override;
+    virtual bool listen(int backlog = SOMAXCONN) override;
+    virtual Socket::ptr accept() override;
+    virtual bool close() override;
+
+    virtual int send(const void *buffer, size_t len, int flags = 0) override;
+    virtual int send(const iovec *buffers, size_t len, int flags = 0) override;
+
+    virtual int send_to(const void *buffer, size_t len, const Address::ptr to, int flags = 0) override;
+    virtual int send_to(const iovec *buffers, size_t len, const Address::ptr to, int flags = 0) override;
+
+    virtual int recv(void *buffer, size_t len, int flags = 0) override;
+    virtual int recv(iovec *buffers, size_t len, int flags = 0) override;
+
+    virtual int recv_from(void *buffer, size_t len, Address::ptr from, int flags = 0) override;
+    virtual int recv_from(iovec *buffers, size_t len, Address::ptr from, int flags = 0) override;
+
+   public:
+    bool load_certificates(const std::string &cert_file, const std::string &key_file);
+
+   public:
+    friend std::ostream &operator<<(std::ostream &os, const SSLSocket::ptr socket);
+    friend std::ostream &operator<<(std::ostream &os, const SSLSocket &socket);
 };
 
 }  // namespace tiger

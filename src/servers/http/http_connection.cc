@@ -242,7 +242,7 @@ HTTPResult::ptr HTTPConnection::Request(HTTPRequest::ptr req,
                                             HTTPResult::ErrorCode::INVALID_HOST,
                                             ss.str());
     }
-    Socket::ptr socket = is_ssl ? SSLSocket::CreateTCP(addr) : Socket::CreateTCPSocket();
+    Socket::ptr socket = is_ssl ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
     if (!socket) {
         std::stringstream ss;
         ss << "[socket create fail"

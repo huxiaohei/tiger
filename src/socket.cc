@@ -241,7 +241,7 @@ bool Socket::set_option(int level, int optname, const void *optval, socklen_t op
     return true;
 }
 
-bool Socket::connect(const Address::ptr addr, uint16_t timeout_ms) {
+bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
     if (!is_valid()) {
         new_sock();
         if (TIGER_UNLIKELY(!is_valid())) {
@@ -324,7 +324,7 @@ bool Socket::listen(int backlog) {
 }
 
 Socket::ptr Socket::accept() {
-    Socket::ptr socket = std::make_shared<Socket>(m_family, m_type, m_protocol);
+    auto socket = std::make_shared<Socket>(m_family, m_type, m_protocol);
     int sock = ::accept(m_sock, nullptr, nullptr);
     if (sock == -1) {
         if (m_is_connected) {
@@ -474,6 +474,171 @@ std::ostream &operator<<(std::ostream &os, const Socket::ptr socket) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Socket &socket) {
+    socket.dump(os);
+    return os;
+}
+
+SSLSocket::SSLSocket(int family, int type, int protocol)
+    : Socket(family, type, protocol) {
+}
+
+SSLSocket::~SSLSocket() {
+}
+
+bool SSLSocket::init(int sock) {
+    bool v = Socket::init(sock);
+    if (v) {
+        m_ssl.reset(SSL_new(m_ctx.get()), SSL_free);
+        SSL_set_fd(m_ssl.get(), m_sock);
+        v = (SSL_accept(m_ssl.get()) == 1);
+    }
+    return v;
+}
+
+Socket::ptr SSLSocket::CreateTCP(tiger::Address::ptr address) {
+    return std::make_shared<SSLSocket>(address->get_family(), SOCK_STREAM, 0);
+}
+
+Socket::ptr SSLSocket::CreateTCPSocket() {
+    return std::make_shared<SSLSocket>(AF_INET, SOCK_STREAM, 0);
+}
+
+Socket::ptr SSLSocket::CreateTCPSocket6() {
+    return std::make_shared<SSLSocket>(AF_INET6, SOCK_STREAM, 0);
+}
+
+bool SSLSocket::connect(const Address::ptr addr, uint64_t timeout_ms) {
+    bool v = Socket::connect(addr, timeout_ms);
+    if (v) {
+        m_ctx.reset(SSL_CTX_new(SSLv23_client_method()), SSL_CTX_free);
+        m_ssl.reset(SSL_new(m_ctx.get()), SSL_free);
+        SSL_set_fd(m_ssl.get(), m_sock);
+        v = (SSL_connect(m_ssl.get()) == 1);
+    }
+    return v;
+}
+
+bool SSLSocket::bind(const Address::ptr addr) {
+    return Socket::bind(addr);
+}
+
+bool SSLSocket::listen(int backlog) {
+    return Socket::listen(backlog);
+}
+
+Socket::ptr SSLSocket::accept() {
+    auto socket = std::make_shared<SSLSocket>(m_family, m_type, m_protocol);
+    int sock = ::accept(m_sock, nullptr, nullptr);
+    if (sock == -1) {
+        TIGER_LOG_E(SYSTEM_LOG) << "[accept fail"
+                                << " sock:" << m_sock
+                                << " type:" << m_type
+                                << " protocol:" << m_protocol
+                                << " errno:" << strerror(errno) << "]";
+        return nullptr;
+    }
+    socket->m_ctx = m_ctx;
+    if (socket->init(sock)) {
+        return socket;
+    }
+    return nullptr;
+}
+
+bool SSLSocket::close() {
+    return Socket::close();
+}
+
+int SSLSocket::send(const void *buffer, size_t len, int flags) {
+    if (m_ssl)
+        return SSL_write(m_ssl.get(), buffer, len);
+    return -1;
+}
+
+int SSLSocket::send(const iovec *buffers, size_t len, int flags) {
+    if (!m_ssl) return -1;
+    int total = 0;
+    for (size_t i = 0; i < len; ++i) {
+        int tmp = SSL_write(m_ssl.get(), buffers[i].iov_base, buffers[i].iov_len);
+        if (tmp <= 0) {
+            return tmp;
+        }
+        total += tmp;
+        if (tmp != (int)buffers[i].iov_len) {
+            break;
+        }
+    }
+    return total;
+}
+
+int SSLSocket::send_to(const void *buffer, size_t len, const Address::ptr to, int flags) {
+    TIGER_ASSERT_WITH_INFO(false, "[SSL called send_to function]");
+    return -1;
+}
+
+int SSLSocket::send_to(const iovec *buffers, size_t len, const Address::ptr to, int flags) {
+    TIGER_ASSERT_WITH_INFO(false, "[SSL called send_to function]");
+    return -1;
+}
+
+int SSLSocket::recv(void *buffer, size_t len, int flags) {
+    if (m_ctx)
+        return SSL_read(m_ssl.get(), buffer, len);
+    return -1;
+}
+
+int SSLSocket::recv(iovec *buffers, size_t len, int flags) {
+    if (!m_ssl) return -1;
+    int total = 0;
+    for (size_t i = 0; i < len; ++i) {
+        int tmp = SSL_read(m_ssl.get(), buffers[i].iov_base, buffers->iov_len);
+        if (tmp <= 0) {
+            return tmp;
+        }
+        total += tmp;
+        if (tmp != (int)buffers[i].iov_len) {
+            break;
+        }
+    }
+    return total;
+}
+
+int SSLSocket::recv_from(void *buffer, size_t len, Address::ptr from, int flags) {
+    TIGER_ASSERT_WITH_INFO(false, "[SSL called send_to function]");
+    return -1;
+}
+
+int SSLSocket::recv_from(iovec *buffers, size_t len, Address::ptr from, int flags) {
+    TIGER_ASSERT_WITH_INFO(false, "[SSL called send_to function]");
+    return -1;
+}
+
+bool SSLSocket::load_certificates(const std::string &cert_file, const std::string &key_file) {
+    m_ctx.reset(SSL_CTX_new(SSLv23_server_method()), SSL_CTX_free);
+    if (SSL_CTX_use_certificate_chain_file(m_ctx.get(), cert_file.c_str()) != 1) {
+        TIGER_LOG_E(SYSTEM_LOG) << "[SSL_CTX_use_certificate_chain_file fail"
+                                << " cert_file:" << cert_file << "]";
+        return false;
+    }
+    if (SSL_CTX_use_PrivateKey_file(m_ctx.get(), key_file.c_str(), SSL_FILETYPE_PEM) != 1) {
+        TIGER_LOG_E(SYSTEM_LOG) << "[SSL_CTX_use_PrivateKey_file fail"
+                                << " key_file:" << key_file << "]";
+        return false;
+    }
+    if (SSL_CTX_check_private_key(m_ctx.get()) != 1) {
+        TIGER_LOG_E(SYSTEM_LOG) << "[SSL_CTX_check_private_key fail"
+                                << " cert_file:" << cert_file
+                                << " key_file:" << key_file << "]";
+        return false;
+    }
+    return true;
+}
+
+std::ostream &operator<<(std::ostream &os, const SSLSocket::ptr socket) {
+    socket->dump(os);
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const SSLSocket &socket) {
     socket.dump(os);
     return os;
 }

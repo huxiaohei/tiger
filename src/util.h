@@ -36,11 +36,11 @@ class StringUtils {
     static std::wstring StringToWString(const std::string &s);
 };
 
-namespace FS {
-
-static bool Unlink(const std::string &filename, bool exist = false);
-
-}
+class FSUtils {
+   public:
+    static bool Unlink(const std::string &filename, bool exist = false);
+    static const std::string ReadFile(const std::string &filename);
+};
 
 }  // namespace tiger
 

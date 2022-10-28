@@ -39,9 +39,9 @@ class TCPServer : public std::enable_shared_from_this<TCPServer> {
     virtual ~TCPServer();
 
    public:
-    virtual bool bind(Address::ptr addr);
+    virtual bool bind(Address::ptr addr, bool is_ssl = false);
     virtual bool bind(const std::vector<Address::ptr> &addrs,
-                      std::vector<Address::ptr> &fails);
+                      std::vector<Address::ptr> &fails, bool is_ssl = false);
 
     virtual bool start();
     virtual void stop();
@@ -55,6 +55,9 @@ class TCPServer : public std::enable_shared_from_this<TCPServer> {
     void set_accept_timeout(int64_t timeout_ms) { m_accept_timeout = timeout_ms; }
     void set_recv_timeout(int64_t timeout_ms) { m_recv_timeout = timeout_ms; }
     void set_name(const std::string &name) { m_name = name; }
+
+   public:
+    bool load_certificates(const std::string &cert_file, const std::string &key_file);
 };
 
 }  // namespace tiger

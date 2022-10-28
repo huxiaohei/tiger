@@ -24,9 +24,18 @@ void test_http_connection() {
     auto iom = std::make_shared<tiger::IOManager>("HTTP", true);
     iom->schedule([iom]() {
         auto rst = tiger::http::HTTPConnection::Get("http://www.baidu.com", 5000);
+        TIGER_LOG_D(tiger::TEST_LOG) << "==========HTTP==========";
         TIGER_LOG_D(tiger::TEST_LOG) << rst->to_string();
-        iom->stop();
+        TIGER_LOG_D(tiger::TEST_LOG) << "==========HTTP==========";
+        iom->schedule([iom]() {
+            auto rst = tiger::http::HTTPConnection::Get("https://www.baidu.com", 5000);
+            TIGER_LOG_D(tiger::TEST_LOG) << "==========HTTPS==========";
+            TIGER_LOG_D(tiger::TEST_LOG) << rst->to_string();
+            TIGER_LOG_D(tiger::TEST_LOG) << "==========HTTPS==========";
+            iom->stop();
+        });
     });
+
     iom->start();
 }
 
@@ -55,8 +64,8 @@ int main(int argc, char **argv) {
     tiger::Thread::SetName("HTTP_CONNECTION");
     TIGER_LOG_D(tiger::TEST_LOG) << "[http_connection test start]";
     test_http_result();
-    // test_http_connection();
-    test_http_connection_pool();
+    test_http_connection();
+    // test_http_connection_pool();
     TIGER_LOG_D(tiger::TEST_LOG) << "[http_connection test end]";
     return 0;
 }
