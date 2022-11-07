@@ -295,7 +295,7 @@ std::ostream &HTTPRequest::dump(std::ostream &os) const {
        << (m_fragment.empty() ? "" : "#") << m_fragment
        << " HTTP/" << ((uint32_t)(m_version >> 4)) << "." << ((uint32_t)(m_version & 0x0F)) << "\r\n";
     if (!m_websocket) {
-        os << "connection: " << (m_close ? "close" : "keep-alive") << "\r\n";
+        os << "Connection: " << (m_close ? "close" : "keep-alive") << "\r\n";
     }
     for (auto &it : m_headers) {
         if (!m_websocket && strcasecmp(it.first.c_str(), "connection") == 0) {

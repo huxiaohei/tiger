@@ -5,8 +5,8 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_HTTP_CONNECTION_H__
-#define __TIGER_HTTP_CONNECTION_H__
+#ifndef __TIGER_HTTP_HTTP_CONNECTION_H__
+#define __TIGER_HTTP_HTTP_CONNECTION_H__
 
 #include <atomic>
 #include <list>
@@ -34,7 +34,8 @@ struct HTTPResult {
         TIMEOUT = 6,
         CREATE_SOCKET_ERROR = 7,
         POOL_GET_CONNECTION_FAIL = 8,
-        POOL_INVALID_CONNECTION = 9
+        POOL_INVALID_CONNECTION = 9,
+        INVALID_PROTOCOLS = 10
     } ErrorCode;
 
     HTTPResponse::ptr rsp;

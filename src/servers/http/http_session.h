@@ -5,8 +5,8 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_HTTP_SESSION_H__
-#define __TIGER_HTTP_SESSION_H__
+#ifndef __TIGER_HTTP_HTTP_SESSION_H__
+#define __TIGER_HTTP_HTTP_SESSION_H__
 
 #include "../../streams/socket_stream.h"
 #include "http_parser.h"

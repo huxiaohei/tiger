@@ -14,6 +14,10 @@
 #include <errno.h>
 #include "../../macro.h"
 
+namespace tiger {
+
+namespace http {
+
 #define LEN(AT, FPC) (FPC - buffer - parser->AT)
 #define MARK(M,FPC) (parser->M = (FPC) - buffer)
 #define PTR_TO(F) (buffer + parser->F)
@@ -206,4 +210,8 @@ int http_response_parser_has_error(http_response_parser *parser) {
 
 int http_response_parser_is_finished(http_response_parser *parser) {
     return parser->cs == http_response_parser_first_final;
+}
+
+}
+
 }

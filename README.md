@@ -6,8 +6,8 @@
 * ragel version 6.10
 * cmake version 3.20.2
 * yaml-cpp version 0.6.2
-* gcc version 11.3.1
 * g++ version 11.3.1
+* OpenSSL version 3.0.1 14
 
 ## 示例
 

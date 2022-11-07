@@ -25,6 +25,7 @@ set(LIB_SRC
     src/streams/socket_stream.cc
     src/servers/tcp_server.cc
     src/uri.cc
+    src/hash.cc
     src/servers/http/http_response_parser.cc
     src/servers/http/http_request_parser.cc
     src/servers/http/http.cc
@@ -33,6 +34,10 @@ set(LIB_SRC
     src/servers/http/http_connection.cc
     src/servers/http/http_servlet.cc
     src/servers/http/http_server.cc
+    src/servers/http/ws_session.cc
+    src/servers/http/ws_connection.cc
+    src/servers/http/ws_servlet.cc
+    src/servers/http/ws_server.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -80,3 +85,9 @@ target_link_libraries(test_tcp_server ${LIBS})
 
 add_executable(test_http_server tests/test_http_server.cc)
 target_link_libraries(test_http_server ${LIBS})
+
+add_executable(test_ws_server tests/test_ws_server.cc)
+target_link_libraries(test_ws_server ${LIBS})
+
+add_executable(test_ws_client tests/test_ws_client.cc)
+target_link_libraries(test_ws_client ${LIBS})

@@ -5,8 +5,8 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_HTTP_PARSER_H__
-#define __TIGER_HTTP_PARSER_H__
+#ifndef __TIGER_HTTP_HTTP_PARSER_H__
+#define __TIGER_HTTP_HTTP_PARSER_H__
 
 #include "http.h"
 #include "http_request_parser.h"

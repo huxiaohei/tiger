@@ -5,8 +5,8 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_HTTP_SERVLET_H__
-#define __TIGER_HTTP_SERVLET_H__
+#ifndef __TIGER_HTTP_HTTP_SERVLET_H__
+#define __TIGER_HTTP_HTTP_SERVLET_H__
 
 #include <functional>
 #include <unordered_map>
@@ -27,7 +27,7 @@ class Servlet {
     typedef std::shared_ptr<Servlet> ptr;
     typedef std::function<int32_t(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session)> Callback;
 
-    Servlet(const std::string &name="");
+    Servlet(const std::string &name = "");
     virtual ~Servlet(){};
 
    public:
@@ -70,7 +70,7 @@ class ServletDispatch : public Servlet {
    public:
     typedef std::shared_ptr<ServletDispatch> ptr;
 
-    ServletDispatch();
+    ServletDispatch(const std::string &name = "");
 
    public:
     int32_t handle(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session) override;

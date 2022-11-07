@@ -12,6 +12,10 @@
 #include <string.h>
 #include "http_request_parser.h"
 
+namespace tiger {
+
+namespace http {
+
 #define LEN(AT, FPC) (FPC - buffer - parser->AT)
 #define MARK(M,FPC) (parser->M = (FPC) - buffer)
 #define PTR_TO(F) (buffer + parser->F)
@@ -302,4 +306,8 @@ int http_request_parser_has_error(http_request_parser *parser) {
 
 int http_request_parser_is_finished(http_request_parser *parser) {
   	return parser->cs >= http_request_parser_first_final;
+}
+
+}
+
 }

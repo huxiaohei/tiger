@@ -5,10 +5,14 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_HTTP_REQUEST_PARSER_H__
-#define __TIGER_HTTP_REQUEST_PARSER_H__
+#ifndef __TIGER_HTTP_HTTP_REQUEST_PARSER_H__
+#define __TIGER_HTTP_HTTP_REQUEST_PARSER_H__
 
 #include "http_parser_common.h"
+
+namespace tiger {
+
+namespace http {
 
 typedef struct {
     int cs;
@@ -43,5 +47,9 @@ int http_request_parser_has_error(http_request_parser *parser);
 int http_request_parser_is_finished(http_request_parser *parser);
 
 #define http_request_parser_nread(parser) (parser)->nread
+
+}  // namespace http
+
+}  // namespace tigre
 
 #endif

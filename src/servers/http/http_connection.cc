@@ -129,7 +129,7 @@ HTTPResponse::ptr HTTPConnection::recv_response() {
         auto encoding = parser->get_data()->get_header("content-encoding", "");
         if (strcasecmp(encoding.c_str(), "gzip") == 0) {
             // todo
-        } else if (strcasecmp(encoding.c_str(), "default") == 0) {
+        } else if (strcasecmp(encoding.c_str(), "deflate") == 0) {
             // todo
         }
         parser->get_data()->set_body(body);

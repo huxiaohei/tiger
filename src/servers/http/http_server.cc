@@ -13,8 +13,11 @@ namespace http {
 
 HTTPServer::HTTPServer(bool keepalive,
                        IOManager::ptr worker,
-                       IOManager::ptr accept)
-    : TCPServer(worker, accept), m_keepalive(keepalive), m_dispatch(std::make_shared<ServletDispatch>()) {
+                       IOManager::ptr accept,
+                       const std::string &name)
+    : TCPServer(worker, accept, name),
+      m_keepalive(keepalive),
+      m_dispatch(std::make_shared<ServletDispatch>()) {
 }
 
 void HTTPServer::handle_client(Socket::ptr client) {

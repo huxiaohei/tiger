@@ -52,8 +52,8 @@ int32_t FunctionServlet::handle(HTTPRequest::ptr request, HTTPResponse::ptr resp
     return m_cb(request, response, session);
 }
 
-ServletDispatch::ServletDispatch()
-    : Servlet("ServletDispatch") {
+ServletDispatch::ServletDispatch(const std::string &name)
+    : Servlet(name) {
     m_default_servlet.reset(new NotFoundServlet);
 }
 

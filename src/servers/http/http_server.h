@@ -5,14 +5,15 @@
  * Copyright (c) 2021 虎小黑
  ****************************************************************/
 
-#ifndef __TIGER_HTTP_SERVER_H__
-#define __TIGER_HTTP_SERVER_H__
+#ifndef __TIGER_HTTP_HTTP_SERVER_H__
+#define __TIGER_HTTP_HTTP_SERVER_H__
 
 #include "../tcp_server.h"
 #include "http_servlet.h"
 #include "http_session.h"
 
 namespace tiger {
+
 namespace http {
 
 class HTTPServer : public TCPServer {
@@ -25,7 +26,8 @@ class HTTPServer : public TCPServer {
 
     HTTPServer(bool keepalive = false,
                IOManager::ptr worker = IOManager::GetThreadIOM(),
-               IOManager::ptr accept = IOManager::GetThreadIOM());
+               IOManager::ptr accept = IOManager::GetThreadIOM(),
+               std::string const &name = "");
 
    public:
     ServletDispatch::ptr get_servlet_dispatch() const { return m_dispatch; }
