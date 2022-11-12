@@ -23,6 +23,7 @@ set(LIB_SRC
     src/bytearray.cc
     src/streams/stream.cc
     src/streams/socket_stream.cc
+    src/streams/zlib_stream.cc
     src/servers/tcp_server.cc
     src/uri.cc
     src/hash.cc
@@ -73,6 +74,9 @@ target_link_libraries(test_socket ${LIBS})
 
 add_executable(test_bytearray tests/test_bytearray.cc)
 target_link_libraries(test_bytearray ${LIBS})
+
+add_executable(test_zlib_stream tests/test_zlib_stream.cc)
+target_link_libraries(test_zlib_stream ${LIBS})
 
 add_executable(test_http_parser tests/test_http_parser.cc)
 target_link_libraries(test_http_parser ${LIBS})

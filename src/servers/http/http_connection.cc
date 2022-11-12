@@ -7,6 +7,8 @@
 
 #include "http_connection.h"
 
+#include "../../streams/zlib_stream.h"
+
 namespace tiger {
 
 namespace http {
@@ -128,9 +130,15 @@ HTTPResponse::ptr HTTPConnection::recv_response() {
     if (!body.empty()) {
         auto encoding = parser->get_data()->get_header("content-encoding", "");
         if (strcasecmp(encoding.c_str(), "gzip") == 0) {
-            // todo
+            auto zs = ZlibStream::CreateGzip(false);
+            zs->write(body.c_str(), body.size());
+            zs->flush();
+            zs->get_result().swap(body);
         } else if (strcasecmp(encoding.c_str(), "deflate") == 0) {
-            // todo
+            auto zs = ZlibStream::CreateDeflate(false);
+            zs->write(body.c_str(), body.size());
+            zs->flush();
+            zs->get_result().swap(body);
         }
         parser->get_data()->set_body(body);
     }

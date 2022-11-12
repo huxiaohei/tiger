@@ -22,6 +22,8 @@ std::string Time2Str(time_t ts, const std::string &format);
 
 class StringUtils {
    public:
+    static std::string Random(size_t len, const std::string chars="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
     static std::string Format(const char *fmt, ...);
     static std::string Formatv(const char *fmt, va_list ap);
 
