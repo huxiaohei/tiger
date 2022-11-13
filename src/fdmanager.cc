@@ -37,7 +37,7 @@ bool FDEntity::init() {
         m_is_socket = S_ISSOCK(fd_stat.st_mode);
     }
     if (m_is_socket) {
-        int flags = fcntl_f(m_fd, F_SETFL, 0);
+        int flags = fcntl_f(m_fd, F_GETFL, 0);
         if (!(flags & O_NONBLOCK)) {
             fcntl_f(m_fd, F_SETFL, flags | O_NONBLOCK);
         }
