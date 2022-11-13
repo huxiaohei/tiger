@@ -83,7 +83,6 @@ typedef int (*fcntl_func)(int fildes, int cmd, ...);
 extern fcntl_func fcntl_f;
 
 typedef int (*ioctl_func)(int fd, unsigned long request, ...);
-;
 extern ioctl_func ioctl_f;
 
 typedef int (*getsockopt_func)(int socket, int level, int option_name,
