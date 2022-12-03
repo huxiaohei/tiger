@@ -9,6 +9,10 @@
 * g++ version 11.3.1
 * OpenSSL version 3.0.1 14
 
+## 说明文档
+
+<https://blog.csdn.net/huxiaoheigame/category_12079132.html?spm=1001.2014.3001.5482>
+
 ## 示例
 
 ### HTTP服务
