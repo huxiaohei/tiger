@@ -151,7 +151,6 @@ bool IPAddress::InterfaceAddresses(std::multimap<std::string, std::pair<IPAddres
                 }
                 case AF_INET6: {
                     addr = std::make_shared<IPv6Address>(*(const sockaddr_in6 *)next->ifa_addr);
-                    ;
                     struct in6_addr &net = ((sockaddr_in6 *)next->ifa_netmask)->sin6_addr;
                     prefix_len = 0;
                     for (int i = 0; i < 16; ++i) {
