@@ -87,6 +87,9 @@ target_link_libraries(test_http_connection ${LIBS})
 add_executable(test_tcp_server tests/test_tcp_server.cc)
 target_link_libraries(test_tcp_server ${LIBS})
 
+add_executable(test_udp_server tests/test_udp_server.cc)
+target_link_libraries(test_udp_server ${LIBS})
+
 add_executable(test_http_server tests/test_http_server.cc)
 target_link_libraries(test_http_server ${LIBS})
 
