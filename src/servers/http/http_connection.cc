@@ -215,6 +215,7 @@ HTTPResult::ptr HTTPConnection::Request(HTTPMethod method,
     req->set_method(method);
     req->set_path(uri->get_path());
     req->set_query(uri->get_query());
+    req->set_close(true);
     req->set_fragment(uri->get_fragment());
     bool has_host = false;
     for (auto &it : headers) {
@@ -445,6 +446,8 @@ HTTPResult::ptr HTTPConnectionPool::request(HTTPMethod method,
         if (strcasecmp(it.first.c_str(), "connection") == 0) {
             if (strcasecmp(it.second.c_str(), "keep-alive") == 0) {
                 req->set_close(false);
+            } else {
+                req->set_close(true);
             }
             continue;
         }
