@@ -39,6 +39,8 @@ set(LIB_SRC
     src/servers/http/ws_connection.cc
     src/servers/http/ws_servlet.cc
     src/servers/http/ws_server.cc
+    src/db/redis/redis.cc
+    src/db/redis/redis_connection.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})
@@ -98,3 +100,6 @@ target_link_libraries(test_ws_server ${LIBS})
 
 add_executable(test_ws_client tests/test_ws_client.cc)
 target_link_libraries(test_ws_client ${LIBS})
+
+add_executable(test_redis tests/test_redis.cc)
+target_link_libraries(test_redis ${LIBS})
