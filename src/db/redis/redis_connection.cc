@@ -38,6 +38,7 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
             m_status = RedisStatus::OK;
         } else {
             TIGER_LOG_W(TEST_LOG) << "[redis auth fail addr:" << *addr << " status:" << rst->get_status() << " reason:" << rst->get_data() << "]";
+            socket->close();
             m_status = RedisStatus::AUTH_FAIL;
         }
     } else {
@@ -131,8 +132,8 @@ void RedisConnection::read_response(std::shared_ptr<T> result) {
     uint64_t offset = 0;
     do {
         int len = read(data + offset, buffer_size - offset);
-        if (len <= 0) {
-            result->set_status(RedisStatus::CONNECT_FAIL);
+        if (len < 0) {
+            result->set_status(RedisStatus::NIL_ERROR);
             m_status = RedisStatus::INVALID;
             close();
             return;
