@@ -26,8 +26,6 @@ class RedisConnection : public SocketStream {
    public:
     bool ping(bool force = false);
     template <typename T>
-    std::shared_ptr<T> exec_cmd_format(bool check_health, const std::string &cmd, const char *fmt, ...);
-    template <typename T>
     std::shared_ptr<T> exec_cmd(const std::string &cmd, bool check_health = true);
     template <typename T>
     void read_response(std::shared_ptr<T> result);

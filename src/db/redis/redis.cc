@@ -12,13 +12,14 @@
 #include "../../macro.h"
 
 namespace tiger {
+
 namespace redis {
 
 void RedisResultStr::parse(const char *s, int len) {
     if (len < 2) return;
     switch (s[0]) {
         case '-': {
-            if (std::string(s, len - 2, 2) == CRLF) set_parse_finished(true);
+            if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) set_parse_finished(true);
             if (parse_finished()) {
                 m_data = std::string(s, 1, len - 3);
             }
@@ -26,7 +27,7 @@ void RedisResultStr::parse(const char *s, int len) {
             break;
         }
         case '+': {
-            if (std::string(s, len - 2, 2) == CRLF) set_parse_finished(true);
+            if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) set_parse_finished(true);
             if (parse_finished()) {
                 m_data = std::string(s, 1, len - 3);
             }
@@ -54,8 +55,8 @@ void RedisResultStr::parse(const char *s, int len) {
             set_status(RedisStatus::PARSE_ERROR);
             break;
     }
-    TIGER_LOG_D(TEST_LOG) << m_data;
 }
 
 }  // namespace redis
+
 }  // namespace tiger

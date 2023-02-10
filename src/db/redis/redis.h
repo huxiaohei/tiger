@@ -15,7 +15,11 @@ namespace tiger {
 
 namespace redis {
 
-#define CRLF "\r\n"
+#define TIGER_REDIS_CRLF "\r\n"
+#define TIGER_REDIS_CMD_AUTH "AUTH"
+#define TIGER_REDIS_CMD_PING "PING"
+#define TIGER_REDIS_CMD_KEY "KEY"
+#define TIGER_REDIS_CMD_GET "GET"
 
 enum RedisStatus {
     OK = 0,

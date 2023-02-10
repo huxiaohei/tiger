@@ -33,10 +33,11 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
     socket->set_recv_timeout(g_redis_recv_timeout->val());
     socket->set_send_timeout(g_redis_send_timeout->val());
     if (!m_password.empty()) {
-        RedisResultStr::ptr rst = exec_cmd_format<RedisResultStr>(false, "AUTH", "%s", m_password.c_str());
+        RedisResultStr::ptr rst = exec_cmd<RedisResultStr>("AUTH " + m_password, false);
         if (rst->is_ok()) {
             m_status = RedisStatus::OK;
         } else {
+            TIGER_LOG_W(TEST_LOG) << "[redis auth fail addr:" << *addr << " reason:" << rst->get_data() << "]";
             m_status = RedisStatus::AUTH_FAIL;
         }
     } else {
@@ -67,26 +68,12 @@ RedisConnection::ptr RedisConnection::CreateRedisConnection(
 
 bool RedisConnection::ping(bool force) {
     auto now = Second();
+    if (TIGER_UNLIKELY(m_status != RedisStatus::OK)) return false;
     if (force || (now - m_last_rtime > g_redis_ping->val())) {
-        auto rst = exec_cmd<RedisResultStr>("PING", false);
+        auto rst = exec_cmd<RedisResultStr>(TIGER_REDIS_CMD_PING, false);
+        if (TIGER_UNLIKELY(rst->get_data() != "PONG")) return false;
     }
     return true;
-}
-
-template <typename T>
-std::shared_ptr<T> RedisConnection::exec_cmd_format(bool check_health, const std::string &cmd, const char *fmt, ...) {
-    std::stringstream ss;
-    ss << cmd << " ";
-    va_list al;
-    va_start(al, fmt);
-    char *buf = nullptr;
-    int len = vasprintf(&buf, fmt, al);
-    if (len != -1) {
-        ss << std::string(buf, len);
-        free(buf);
-    }
-    va_end(al);
-    return exec_cmd<T>(ss.str(), check_health);
 }
 
 template <typename T>
@@ -110,9 +97,9 @@ std::string RedisConnection::pack_commond(const std::string &org_cmd) {
     }
     ss.clear();
     ss.str("");
-    ss << "*" << segments.size() << CRLF;
+    ss << "*" << segments.size() << TIGER_REDIS_CRLF;
     for (auto &it : segments) {
-        ss << "$" << it.size() << CRLF << it << CRLF;
+        ss << "$" << it.size() << TIGER_REDIS_CRLF << it << TIGER_REDIS_CRLF;
     }
     return ss.str();
 }
@@ -153,6 +140,7 @@ void RedisConnection::read_response(std::shared_ptr<T> result) {
         }
         result->parse(data, len);
         if (result->parse_finished()) {
+            m_last_rtime = Second();
             break;
         }
         if (result->is_parse_error()) {
