@@ -37,7 +37,7 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
         if (rst->is_ok()) {
             m_status = RedisStatus::OK;
         } else {
-            TIGER_LOG_W(TEST_LOG) << "[redis auth fail addr:" << *addr << " reason:" << rst->get_data() << "]";
+            TIGER_LOG_W(TEST_LOG) << "[redis auth fail addr:" << *addr << " status:" << rst->get_status() << " reason:" << rst->get_data() << "]";
             m_status = RedisStatus::AUTH_FAIL;
         }
     } else {
