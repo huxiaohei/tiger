@@ -265,6 +265,7 @@ bool IOManager::cancel_event(int fd, EventStatus status) {
         TIGER_LOG_E(SYSTEM_LOG) << "[cancel_event fail"
                                 << " fd:" << fd
                                 << " size:" << m_contexts.size() << "]";
+        rlock.unlock();
         return false;
     }
     auto ctx = m_contexts[fd];
@@ -273,6 +274,7 @@ bool IOManager::cancel_event(int fd, EventStatus status) {
                                 << " fd:" << fd
                                 << " statuses:" << ctx->statuses
                                 << " status:" << status << "]";
+        rlock.unlock();
         return false;
     }
     rlock.unlock();
