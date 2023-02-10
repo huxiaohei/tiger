@@ -48,7 +48,7 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
 RedisConnection::~RedisConnection() {
 }
 
-RedisConnection::ptr RedisConnection::CreateRedisConnection(
+RedisConnection::ptr RedisConnection::Create(
     IPAddress::ptr addr,
     const std::string &pwd,
     bool ssl) {
@@ -56,14 +56,18 @@ RedisConnection::ptr RedisConnection::CreateRedisConnection(
     return std::make_shared<RedisConnection>(socket, addr, pwd);
 }
 
-RedisConnection::ptr RedisConnection::CreateRedisConnection(
+RedisConnection::ptr RedisConnection::Create(
     const std::string &host,
     int32_t port,
     const std::string &pwd,
     bool ssl) {
     auto addr = IPAddress::LookupAny(host);
     addr->set_port(port);
-    return CreateRedisConnection(addr, pwd, ssl);
+    return Create(addr, pwd, ssl);
+}
+
+bool RedisConnection::is_ok() {
+    return m_status == RedisStatus::OK;
 }
 
 bool RedisConnection::ping(bool force) {
@@ -71,7 +75,10 @@ bool RedisConnection::ping(bool force) {
     if (TIGER_UNLIKELY(m_status != RedisStatus::OK)) return false;
     if (force || (now - m_last_rtime > g_redis_ping->val())) {
         auto rst = exec_cmd<RedisResultStr>(TIGER_REDIS_CMD_PING, false);
-        if (TIGER_UNLIKELY(rst->get_data() != "PONG")) return false;
+        if (TIGER_UNLIKELY(rst->get_data() != "PONG")) {
+            m_status = RedisStatus::CONNECT_FAIL;
+            return false;
+        }
     }
     return true;
 }

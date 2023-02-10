@@ -33,6 +33,10 @@ enum RedisStatus {
 };
 
 class RedisResult {
+   private:
+    RedisStatus m_status;
+    bool m_parse_finished;
+
    public:
     typedef std::shared_ptr<RedisResult> ptr;
 
@@ -50,13 +54,12 @@ class RedisResult {
 
    public:
     virtual void parse(const char *s, int len) = 0;
-
-   private:
-    RedisStatus m_status;
-    bool m_parse_finished;
 };
 
 class RedisResultStr : public RedisResult {
+   private:
+    std::string m_data;
+
    public:
     typedef std::shared_ptr<RedisResultStr> ptr;
 
@@ -65,9 +68,6 @@ class RedisResultStr : public RedisResult {
 
    public:
     void parse(const char *s, int len) override;
-
-   private:
-    std::string m_data;
 };
 
 }  // namespace redis

@@ -41,6 +41,7 @@ set(LIB_SRC
     src/servers/http/ws_server.cc
     src/db/redis/redis.cc
     src/db/redis/redis_connection.cc
+    src/db/redis/redis_connection_pool.cc
 )
 
 add_library(TIGER SHARED ${LIB_SRC})

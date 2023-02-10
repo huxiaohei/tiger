@@ -17,6 +17,17 @@ namespace tiger {
 namespace redis {
 
 class RedisConnection : public SocketStream {
+   private:
+    IPAddress::ptr m_addr;
+    std::string m_password;
+    time_t m_last_rtime;
+    RedisStatus m_status;
+
+   protected:
+    std::string pack_commond(const std::string &org_cmd);
+    template <typename T>
+    void send_commond(const std::string &cmd, std::shared_ptr<T> result, bool check_health = true);
+
    public:
     typedef std::shared_ptr<RedisConnection> ptr;
 
@@ -24,6 +35,7 @@ class RedisConnection : public SocketStream {
     ~RedisConnection();
 
    public:
+    bool is_ok();
     bool ping(bool force = false);
     template <typename T>
     std::shared_ptr<T> exec_cmd(const std::string &cmd, bool check_health = true);
@@ -31,19 +43,8 @@ class RedisConnection : public SocketStream {
     void read_response(std::shared_ptr<T> result);
 
    public:
-    static RedisConnection::ptr CreateRedisConnection(IPAddress::ptr addr, const std::string &pwd, bool ssl);
-    static RedisConnection::ptr CreateRedisConnection(const std::string &host, int32_t port, const std::string &pwd, bool ssl = false);
-
-   private:
-    std::string pack_commond(const std::string &org_cmd);
-    template <typename T>
-    void send_commond(const std::string &cmd, std::shared_ptr<T> result, bool check_health = true);
-
-   private:
-    IPAddress::ptr m_addr;
-    std::string m_password;
-    time_t m_last_rtime;
-    RedisStatus m_status;
+    static RedisConnection::ptr Create(IPAddress::ptr addr, const std::string &pwd, bool ssl);
+    static RedisConnection::ptr Create(const std::string &host, int32_t port, const std::string &pwd, bool ssl = false);
 };
 
 }  // namespace redis
