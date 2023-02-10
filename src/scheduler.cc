@@ -112,8 +112,8 @@ void Scheduler::run() {
         }
     }
     --m_thread_cnt;
+    TIGER_LOG_D(TEST_LOG) << "exit";
     tickle();
-    close_hook();
 }
 
 void Scheduler::idle() {

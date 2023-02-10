@@ -57,11 +57,11 @@ class Scheduler : public std::enable_shared_from_this<Scheduler> {
     pid_t m_main_thread_id;
     bool m_is_stopping;
     bool m_is_stopped;
-    std::atomic<size_t> m_idle_cnt{0};
     std::vector<Thread::ptr> m_threads;
     Semaphore m_semaphore;
 
    protected:
+    std::atomic<size_t> m_idle_cnt{0};
     std::list<Task> m_tasks;
     MutexLock m_mutex;
 

@@ -100,7 +100,11 @@ void IOManager::idle() {
         do {
             static const int EPOLL_MAX_TIMEOUT = 5000;
             time_t next_time = next_timer_left_time();
-            rt = epoll_wait(m_epfd, events, 256, next_time > EPOLL_MAX_TIMEOUT ? EPOLL_MAX_TIMEOUT : (int)next_time);
+            next_time = next_time < 0 ? EPOLL_MAX_TIMEOUT : next_time;
+            next_time = next_time > EPOLL_MAX_TIMEOUT ? EPOLL_MAX_TIMEOUT : next_time;
+            ++m_idle_cnt;
+            rt = epoll_wait(m_epfd, events, 256, (int)next_time);
+            --m_idle_cnt;
             if (rt > 0 || next_timer_left_time() <= 0 || is_stopping()) break;
         } while (true);
         all_expired_cbs(cbs);
@@ -227,6 +231,7 @@ bool IOManager::del_event(int fd, EventStatus status) {
         TIGER_LOG_E(SYSTEM_LOG) << "[del_event fail"
                                 << " fd:" << fd
                                 << " size:" << m_contexts.size() << "]";
+        rlock.unlock();
         return false;
     }
     auto ctx = m_contexts[fd];
@@ -235,6 +240,7 @@ bool IOManager::del_event(int fd, EventStatus status) {
                                 << " fd:" << fd
                                 << " statuses:" << ctx->statuses
                                 << " status:" << status << "]";
+        rlock.unlock();
         return false;
     }
     rlock.unlock();
@@ -301,9 +307,10 @@ bool IOManager::cancel_event(int fd, EventStatus status) {
 bool IOManager::cancel_all_event(int fd) {
     ReadWriteLock::ReadLock rlock(m_lock);
     if ((int)m_contexts.size() <= fd) {
-        TIGER_LOG_E(SYSTEM_LOG) << "[cancel_event fail"
+        TIGER_LOG_E(SYSTEM_LOG) << "[cancel_all_event fail"
                                 << " fd:" << fd
                                 << " size:" << m_contexts.size() << "]";
+        rlock.unlock();
         return false;
     }
     auto ctx = m_contexts[fd];
