@@ -115,7 +115,8 @@ time_t TimerManager::next_timer_left_time() {
     if (n_ms >= (*m_timers.begin())->m_next_time) {
         return 0;
     } else {
-        return (*m_timers.begin())->m_next_time - n_ms;
+        time_t left_time = (*m_timers.begin())->m_next_time - n_ms;
+        return left_time < 0 ? 0: left_time;
     }
 }
 
