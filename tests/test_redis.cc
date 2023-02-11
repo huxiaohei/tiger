@@ -14,7 +14,6 @@ void test_redis_connection() {
 }
 
 void test_redis_connection_pool() {
-    tiger::Thread::SetName("RedisTestMianThread");
     auto iom = std::make_shared<tiger::IOManager>("RedisTestSubThread", true, 4);
     auto redis_connection_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 10);
     for (int i = 0; i < 5000; ++i) {
@@ -35,6 +34,7 @@ void test_redis_connection_pool() {
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
+    tiger::Thread::SetName("RedisTestMianThread");
     test_redis_connection();
     test_redis_connection_pool();
     return 0;

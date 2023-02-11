@@ -39,6 +39,7 @@ void RedisResultStr::parse(const char *s, int len) {
             if (digit == -1) {
                 set_parse_finished(true);
                 set_status(RedisStatus::NIL_ERROR);
+                m_data.clear();
             } else {
                 if (len - digit - 2 - 2 - 1 == 1 + (int)floor(log10(digit))) {
                     set_parse_finished(true);
