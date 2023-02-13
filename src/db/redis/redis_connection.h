@@ -25,8 +25,8 @@ class RedisConnection : public SocketStream {
 
    protected:
     std::string pack_commond(const std::string &org_cmd);
-    template <typename T>
-    void send_commond(const std::string &cmd, std::shared_ptr<T> result, bool check_health = true);
+    void send_commond(const std::string &cmd, RedisResult::ptr result, bool check_health = true);
+    void read_response(RedisResult::ptr result);
 
    public:
     typedef std::shared_ptr<RedisConnection> ptr;
@@ -37,10 +37,17 @@ class RedisConnection : public SocketStream {
    public:
     bool is_ok();
     bool ping(bool force = false);
+
     template <typename T>
-    std::shared_ptr<T> exec_cmd(const std::string &cmd, bool check_health = true);
-    template <typename T>
-    void read_response(std::shared_ptr<T> result);
+    std::shared_ptr<T> exec_cmd(const std::string &cmd, bool check_health = true) {
+        auto rst = std::make_shared<T>();
+        send_commond(cmd, rst, check_health);
+        if (rst->get_status() == RedisStatus::CONNECT_FAIL) {
+            return rst;
+        }
+        read_response(rst);
+        return rst;
+    }
 
    public:
     static RedisConnection::ptr Create(IPAddress::ptr addr, const std::string &pwd, bool ssl);

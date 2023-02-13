@@ -7,10 +7,21 @@
 
 #include "../src/db/redis/redis_connection_pool.h"
 
-void test_redis_connection() {
+void test_redis_connection_str() {
     auto redis_connection = tiger::redis::RedisConnection::Create("127.0.0.1", 6401, "liuhu");
     auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultStr>("GET hello");
-    TIGER_LOG_D(tiger::TEST_LOG) << rst->get_data();
+    TIGER_LOG_D(tiger::TEST_LOG) << rst;
+}
+
+void test_redis_connection_vector() {
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestSubThread", true, 2);
+    auto redis_connection = tiger::redis::RedisConnection::Create("127.0.0.1", 6401, "liuhu");
+    iom->schedule([redis_connection, iom]() {
+        auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVector<std::string>>("KEYS *");
+        TIGER_LOG_D(tiger::TEST_LOG) << rst;
+        iom->stop();
+    });
+    iom->start();
 }
 
 void test_redis_connection_pool() {
@@ -35,7 +46,8 @@ void test_redis_connection_pool() {
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
-    test_redis_connection();
-    test_redis_connection_pool();
+    test_redis_connection_str();
+    test_redis_connection_vector();
+    // test_redis_connection_pool();
     return 0;
 }

@@ -17,7 +17,7 @@ static ConfigVar<size_t>::ptr g_redis_connect_timeout = Config::Lookup<size_t>("
 static ConfigVar<size_t>::ptr g_redis_send_timeout = Config::Lookup<size_t>("tiger.redis.g_redis_send_timeout", 6 * 1000, "redis send timeout");
 static ConfigVar<size_t>::ptr g_redis_recv_timeout = Config::Lookup<size_t>("tiger.redis.g_redis_recv_timeout", 6 * 1000, "redis recv timeout");
 static ConfigVar<int64_t>::ptr g_redis_ping = Config::Lookup<int64_t>("tiger.redis.ping", 6, "redis connection ping");
-static ConfigVar<uint64_t>::ptr g_redis_response_buffer_size = Config::Lookup<uint64_t>("tiger.redis.responseBufferSize", 4 * 1024, "redis response buffer size");
+static ConfigVar<uint64_t>::ptr g_redis_response_buffer_size = Config::Lookup<uint64_t>("tiger.redis.responseBufferSize", 1024 * 1024, "redis response buffer size");
 
 RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const std::string &pwd)
     : SocketStream(socket, true),
@@ -84,17 +84,6 @@ bool RedisConnection::ping(bool force) {
     return true;
 }
 
-template <typename T>
-std::shared_ptr<T> RedisConnection::exec_cmd(const std::string &cmd, bool check_health) {
-    auto rst = std::make_shared<T>();
-    send_commond(cmd, rst, check_health);
-    if (rst->get_status() == RedisStatus::CONNECT_FAIL) {
-        return rst;
-    }
-    read_response(rst);
-    return rst;
-}
-
 std::string RedisConnection::pack_commond(const std::string &org_cmd) {
     std::stringstream ss;
     ss << org_cmd;
@@ -112,8 +101,7 @@ std::string RedisConnection::pack_commond(const std::string &org_cmd) {
     return ss.str();
 }
 
-template <typename T>
-void RedisConnection::send_commond(const std::string &cmd, std::shared_ptr<T> result, bool check_health) {
+void RedisConnection::send_commond(const std::string &cmd, RedisResult::ptr result, bool check_health) {
     if (check_health && !ping()) {
         result->set_status(RedisStatus::CONNECT_FAIL);
         return;
@@ -122,8 +110,7 @@ void RedisConnection::send_commond(const std::string &cmd, std::shared_ptr<T> re
     write_fixed_size(package.c_str(), package.size());
 }
 
-template <typename T>
-void RedisConnection::read_response(std::shared_ptr<T> result) {
+void RedisConnection::read_response(RedisResult::ptr result) {
     uint64_t buffer_size = g_redis_response_buffer_size->val();
     std::shared_ptr<char> buffer(new char[buffer_size + 1], [](char *ptr) {
         delete[] ptr;
@@ -136,17 +123,17 @@ void RedisConnection::read_response(std::shared_ptr<T> result) {
             result->set_status(RedisStatus::NIL_ERROR);
             m_status = RedisStatus::INVALID;
             close();
-            return;
+            break;
         }
-        data[len] = '\0';
         offset += len;
+        data[offset] = '\0';
         if (offset == buffer_size) {
             result->set_status(RedisStatus::READ_OVERFLOW);
             m_status = RedisStatus::INVALID;
             close();
-            return;
+            break;
         }
-        result->parse(data, len);
+        result->parse(data, offset);
         if (result->parse_finished()) {
             m_last_rtime = Second();
             break;
@@ -154,7 +141,7 @@ void RedisConnection::read_response(std::shared_ptr<T> result) {
         if (result->is_parse_error()) {
             m_status = RedisStatus::INVALID;
             close();
-            return;
+            break;
         }
     } while (true);
 }
