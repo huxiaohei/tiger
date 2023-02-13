@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.18)
 project(TIGER)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -g -std=c++11 -lssl -Wall -Wno-deprecated -Werror -Wno-unused-function -DCMAKE_BUILD_TYPE=Debug")
+set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -rdynamic -g -ggdb -std=c++11 -lssl -Wall -Wno-deprecated -Werror -Wno-unused-function")
+set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -rdynamic -g -ggdb -std=c++11 -lssl -Wall -Wno-deprecated -Werror -Wno-unused-function")
 
 find_library(YAMLCPP yaml-cpp)
 
