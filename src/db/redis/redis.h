@@ -80,10 +80,69 @@ class RedisResult {
 
     bool parse_finished() const { return m_parse_finished; }
     bool is_ok() { return m_status == RedisStatus::OK; }
-    bool is_parse_error() { return m_status == RedisStatus::PARSE_ERROR; }
+    bool is_parse_error() {
+        return m_status == RedisStatus::PARSE_ERROR || m_status == RedisStatus::REPLY_ERROR || m_status == RedisStatus::NIL_ERROR;
+    }
 
    public:
     virtual void parse(const char *s, int len) = 0;
+};
+
+class RedisResultInt : public RedisResult {
+   private:
+    int m_data;
+
+   public:
+    typedef std::shared_ptr<RedisResultInt> ptr;
+
+    RedisResultInt()
+        : RedisResult(), m_data(0) {}
+
+   public:
+    int get_data() { return m_data; }
+
+    friend std::ostream &operator<<(std::ostream &os, const RedisResultInt &rst) {
+        return os << rst.m_data;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const RedisResultInt::ptr rst) {
+        return os << rst->m_data;
+    }
+
+   public:
+    void parse(const char *s, int len) override {
+        if (len < 2) return;
+        switch (s[0]) {
+            case '-': {
+                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) set_parse_finished(true);
+                if (parse_finished()) {
+                    m_data = 0;
+                    m_err_desc = std::string(s, 1, len - 3);
+                }
+                set_status(RedisStatus::REPLY_ERROR);
+                break;
+            }
+            case ':': {
+                int digit = std::atoi(s + 1);
+                if (digit == -1) {
+                    set_parse_finished(true);
+                    set_status(RedisStatus::NIL_ERROR);
+                    m_err_desc = "nil";
+                } else {
+                    m_data = digit;
+                    if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+                        set_parse_finished(true);
+                        set_status(RedisStatus::OK);
+                    }
+                }
+                break;
+            }
+            default:
+                set_parse_finished(true);
+                set_status(RedisStatus::PARSE_ERROR);
+                break;
+        }
+    }
 };
 
 class RedisResultStr : public RedisResult {
@@ -93,8 +152,11 @@ class RedisResultStr : public RedisResult {
    public:
     typedef std::shared_ptr<RedisResultStr> ptr;
 
+    RedisResultStr()
+        : RedisResult(), m_data("") {}
+
    public:
-    std::string &get_data() { return m_data; };
+    std::string &get_data() { return m_data; }
 
     friend std::ostream &operator<<(std::ostream &os, const RedisResultStr &rst) {
         return os << rst.m_data;
@@ -117,11 +179,13 @@ class RedisResultStr : public RedisResult {
                 break;
             }
             case '+': {
-                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) set_parse_finished(true);
+                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+                    set_parse_finished(true);
+                    set_status(RedisStatus::OK);
+                }
                 if (parse_finished()) {
                     m_data = std::string(s, 1, len - 3);
                 }
-                set_status(RedisStatus::OK);
                 break;
             }
             case '$': {
@@ -130,7 +194,6 @@ class RedisResultStr : public RedisResult {
                     set_parse_finished(true);
                     set_status(RedisStatus::NIL_ERROR);
                     m_err_desc = "nil";
-                    m_data.clear();
                 } else {
                     if (len - digit - 2 - 2 - 1 == 1 + (int)floor(log10(digit))) {
                         set_parse_finished(true);
@@ -160,7 +223,7 @@ class RedisResultVector : public RedisResult {
     typedef std::shared_ptr<RedisResultVector<T>> ptr;
 
     RedisResultVector()
-        : RedisResult(), m_parse_len(0){};
+        : RedisResult(), m_data(std::vector<T>()), m_parse_len(0){};
 
    public:
     std::vector<T> &get_data() { return m_data; };
@@ -198,6 +261,14 @@ class RedisResultVector : public RedisResult {
             }
             case '*': {
                 int rst_size = std::atoi(s + 1);
+                if (rst_size == 0) {
+                    if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+                        m_parse_len = len;
+                        set_parse_finished(true);
+                        set_status(RedisStatus::OK);
+                    }
+                    break;
+                }
                 if (m_parse_len == 0) {
                     m_parse_len += (1 + 1 + (int)floor(log10(rst_size)) + 2);
                 }

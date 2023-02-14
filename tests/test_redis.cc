@@ -18,7 +18,10 @@ void test_redis_connection_vector() {
     auto redis_connection = tiger::redis::RedisConnection::Create("127.0.0.1", 6401, "liuhu");
     iom->schedule([redis_connection, iom]() {
         auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVector<std::string>>("KEYS *");
-        TIGER_LOG_D(tiger::TEST_LOG) << rst;
+        for (const auto &it : rst->get_data()) {
+            auto del_rst = redis_connection->exec_cmd<tiger::redis::RedisResultInt>("DEL " + it);
+            TIGER_LOG_D(tiger::TEST_LOG) << del_rst;
+        }
         iom->stop();
     });
     iom->start();
@@ -30,13 +33,9 @@ void test_redis_connection_pool() {
     for (int i = 0; i < 5000; ++i) {
         iom->add_timer(i, [redis_connection_pool, i]() {
             redis_connection_pool->get_connection()->exec_cmd<tiger::redis::RedisResultStr>("SET idx" + std::to_string(i) + " " + std::to_string(i));
-            auto rst = redis_connection_pool->get_connection()->exec_cmd<tiger::redis::RedisResultStr>("GET idx" + std::to_string(i));
         });
     }
     iom->add_timer(15000, [iom, redis_connection_pool]() {
-        TIGER_LOG_D(tiger::TEST_LOG) << "timeout";
-        auto rst = redis_connection_pool->get_connection()->exec_cmd<tiger::redis::RedisResultStr>("GET idx4999");
-        TIGER_LOG_D(tiger::TEST_LOG) << "GET idx4999: " << rst->get_data();
         iom->stop();
     });
     iom->start();
@@ -48,6 +47,6 @@ int main() {
     tiger::Thread::SetName("RedisTestMianThread");
     test_redis_connection_str();
     test_redis_connection_vector();
-    // test_redis_connection_pool();
+    test_redis_connection_pool();
     return 0;
 }
