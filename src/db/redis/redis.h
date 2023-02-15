@@ -8,6 +8,7 @@
 #ifndef __TIGER_REDIS_REIDS_H__
 #define __TIGER_REDIS_REIDS_H__
 
+#include <boost/lexical_cast.hpp>
 #include <cmath>
 #include <memory>
 #include <string>
@@ -32,14 +33,31 @@ enum RedisStatus {
     REPLY_ERROR = -4,
     NIL_ERROR = -5,
     PARSE_ERROR = -5,
-    READ_OVERFLOW = -7
+    READ_OVERFLOW = -7,
+    TIMEOUT = -8
 };
 
 template <typename T>
 class RedisValTrans {
    public:
     T operator()(const char *s, int len) {
-        return T();
+        return boost::lexical_cast<T>(std::string(s, len));
+    }
+};
+
+template <>
+class RedisValTrans<int> {
+   public:
+    int operator()(const char *s, int len) {
+        return std::atoi(s);
+    }
+};
+
+template <>
+class RedisValTrans<long int> {
+   public:
+    long int operator()(const char *s, int len) {
+        return std::atol(s);
     }
 };
 
@@ -49,14 +67,6 @@ class RedisValTrans<std::string> {
     std::string operator()(const char *s, int len) {
         if (len == 0) return "";
         return std::string(s, len);
-    }
-};
-
-template <>
-class RedisValTrans<int> {
-   public:
-    int operator()(const char *s, int len) {
-        return std::atoi(s);
     }
 };
 
@@ -84,83 +94,32 @@ class RedisResult {
 
     bool parse_finished() const { return m_parse_finished; }
     bool is_ok() { return m_status == RedisStatus::OK; }
-    bool is_parse_error() {
-        return m_status == RedisStatus::PARSE_ERROR || m_status == RedisStatus::REPLY_ERROR || m_status == RedisStatus::NIL_ERROR;
-    }
+    bool is_parse_error() { return m_status == RedisStatus::PARSE_ERROR; }
 
    public:
     virtual void parse(const char *s, int len) = 0;
 };
 
-class RedisResultInt : public RedisResult {
+template <typename T>
+class RedisResultVal : public RedisResult {
    protected:
-    int m_data;
+    T m_data;
 
    public:
-    typedef std::shared_ptr<RedisResultInt> ptr;
+    typedef std::shared_ptr<RedisResultVal<T>> ptr;
 
-    RedisResultInt()
-        : RedisResult(), m_data(0) {}
-
-   public:
-    int get_data() { return m_data; }
-
-    friend std::ostream &operator<<(std::ostream &os, const RedisResultInt::ptr rst) {
-        if (rst->get_status() == RedisStatus::OK)
-            os << rst->m_data;
-        else
-            os << rst->m_err_desc;
-        return os;
-    }
+    RedisResultVal()
+        : RedisResult() {}
 
    public:
-    void parse(const char *s, int len) override {
-        if (len < 2) return;
-        switch (s[0]) {
-            case '-': {
-                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_data = 0;
-                    m_err_desc = std::string(s, 1, len - 3);
-                    set_parse_finished(true);
-                    set_status(RedisStatus::REPLY_ERROR);
-                }
-                break;
-            }
-            case ':': {
-                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    int digit = std::atoi(s + 1);
-                    m_data = digit;
-                    set_parse_finished(true);
-                    set_status(RedisStatus::OK);
-                }
-                break;
-            }
-            default:
-                set_parse_finished(true);
-                set_status(RedisStatus::PARSE_ERROR);
-                break;
+    T &get_data() { return m_data; }
+
+    friend std::ostream &operator<<(std::ostream &os, const RedisResultVal<T>::ptr rst) {
+        if (rst->get_status() == RedisStatus::OK) {
+            os << "[" << rst->m_data << "]";
+        } else {
+            os << "[" << rst->m_err_desc << "]";
         }
-    }
-};
-
-class RedisResultStr : public RedisResult {
-   private:
-    std::string m_data;
-
-   public:
-    typedef std::shared_ptr<RedisResultStr> ptr;
-
-    RedisResultStr()
-        : RedisResult(), m_data("") {}
-
-   public:
-    std::string &get_data() { return m_data; }
-
-    friend std::ostream &operator<<(std::ostream &os, const RedisResultStr::ptr rst) {
-        if (rst->get_status() == RedisStatus::OK)
-            os << rst->m_data;
-        else
-            os << rst->m_err_desc;
         return os;
     }
 
@@ -178,7 +137,15 @@ class RedisResultStr : public RedisResult {
             }
             case '+': {
                 if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_data = std::string(s, 1, len - 3);
+                    m_data = RedisValTrans<T>()(s + 1, len - 3);
+                    set_parse_finished(true);
+                    set_status(RedisStatus::OK);
+                }
+                break;
+            }
+            case ':': {
+                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+                    m_data = RedisValTrans<T>()(s + 1, len - 3);
                     set_parse_finished(true);
                     set_status(RedisStatus::OK);
                 }
@@ -186,14 +153,13 @@ class RedisResultStr : public RedisResult {
             }
             case '$': {
                 int digit = std::atoi(s + 1);
-                if (digit == -1) {
+                if (digit == -1 && std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
                     m_err_desc = "nil";
                     set_parse_finished(true);
                     set_status(RedisStatus::NIL_ERROR);
                 } else {
-                    // $5\r\nhello\r\n
                     if (len - digit - 2 == 1 + 1 + (int)floor(log10(digit)) + 2) {
-                        m_data = std::string(s, len - digit - 2, digit);
+                        m_data = RedisValTrans<T>()(s + (len - digit - 2), digit);
                         set_parse_finished(true);
                         set_status(RedisStatus::OK);
                     } else {
@@ -213,14 +179,14 @@ class RedisResultStr : public RedisResult {
 template <typename T>
 class RedisResultVector : public RedisResult {
    private:
-    std::vector<T> m_data;
     int m_parse_len;
+    std::vector<T> m_data;
 
    public:
     typedef std::shared_ptr<RedisResultVector<T>> ptr;
 
     RedisResultVector()
-        : RedisResult(), m_data(std::vector<T>()), m_parse_len(0){};
+        : RedisResult(), m_parse_len(0) {}
 
    public:
     std::vector<T> &get_data() { return m_data; };

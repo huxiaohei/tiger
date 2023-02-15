@@ -33,7 +33,7 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
     socket->set_recv_timeout(g_redis_recv_timeout->val());
     socket->set_send_timeout(g_redis_send_timeout->val());
     if (!m_password.empty()) {
-        RedisResultStr::ptr rst = exec_cmd<RedisResultStr>("AUTH " + m_password, false);
+        auto rst = exec_cmd<RedisResultVal<std::string>>("AUTH " + m_password, false);
         if (rst->is_ok()) {
             m_status = RedisStatus::OK;
         } else {
@@ -75,7 +75,7 @@ bool RedisConnection::ping(bool force) {
     auto now = Second();
     if (TIGER_UNLIKELY(m_status != RedisStatus::OK)) return false;
     if (force || (now - m_last_rtime > g_redis_ping->val())) {
-        auto rst = exec_cmd<RedisResultStr>(TIGER_REDIS_CMD_PING, false);
+        auto rst = exec_cmd<RedisResultVal<std::string>>(TIGER_REDIS_CMD_PING, false);
         if (TIGER_UNLIKELY(rst->get_data() != "PONG")) {
             m_status = RedisStatus::CONNECT_FAIL;
             return false;
@@ -120,7 +120,8 @@ void RedisConnection::read_response(RedisResult::ptr result) {
     do {
         int len = read(data + offset, buffer_size - offset);
         if (len < 0) {
-            result->set_status(RedisStatus::NIL_ERROR);
+            result->set_status(RedisStatus::TIMEOUT);
+            result->set_err_desc("Err: Redis timeout");
             m_status = RedisStatus::INVALID;
             close();
             break;
@@ -129,7 +130,7 @@ void RedisConnection::read_response(RedisResult::ptr result) {
         data[offset] = '\0';
         if (offset == buffer_size) {
             result->set_status(RedisStatus::READ_OVERFLOW);
-            result->set_err_desc("Err: Redis读缓存超出");
+            result->set_err_desc("Err: Redis read overflow");
             m_status = RedisStatus::INVALID;
             close();
             break;
@@ -140,7 +141,7 @@ void RedisConnection::read_response(RedisResult::ptr result) {
             break;
         }
         if (result->is_parse_error()) {
-            result->set_err_desc("Err: Redis数据解析失败 " + std::string(data, offset));
+            result->set_err_desc("Err: Redis parse data fail " + std::string(data, offset));
             m_status = RedisStatus::INVALID;
             close();
             break;

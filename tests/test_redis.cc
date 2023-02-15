@@ -9,7 +9,7 @@
 
 void test_redis_connection_str() {
     auto redis_connection = tiger::redis::RedisConnection::Create("127.0.0.1", 6401, "liuhu");
-    auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVector<std::string>>("MGET hello world");
+    auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVal<std::string>>("GET hello");
     TIGER_LOG_D(tiger::TEST_LOG) << rst;
 }
 
@@ -19,7 +19,7 @@ void test_redis_connection_vector() {
     iom->schedule([redis_connection, iom]() {
         auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVector<std::string>>("KEYS *");
         for (const auto &it : rst->get_data()) {
-            auto del_rst = redis_connection->exec_cmd<tiger::redis::RedisResultInt>("DEL " + it);
+            auto del_rst = redis_connection->exec_cmd<tiger::redis::RedisResultVal<int>>("DEL " + it);
             TIGER_LOG_D(tiger::TEST_LOG) << del_rst;
         }
         iom->stop();
@@ -32,7 +32,7 @@ void test_redis_connection_pool() {
     auto redis_connection_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 10);
     for (int i = 0; i < 5000; ++i) {
         iom->add_timer(i, [redis_connection_pool, i]() {
-            redis_connection_pool->get_connection()->exec_cmd<tiger::redis::RedisResultStr>("SET idx" + std::to_string(i) + " " + std::to_string(i));
+            redis_connection_pool->get_connection()->exec_cmd<tiger::redis::RedisResultVal<std::string>>("SET idx" + std::to_string(i) + " " + std::to_string(i));
         });
     }
     iom->add_timer(15000, [iom, redis_connection_pool]() {
@@ -45,7 +45,7 @@ void test_redis_connection_pool() {
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
-    test_redis_connection_str();
+    // test_redis_connection_str();
     // test_redis_connection_vector();
     // test_redis_connection_pool();
     return 0;
