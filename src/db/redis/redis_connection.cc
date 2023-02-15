@@ -129,6 +129,7 @@ void RedisConnection::read_response(RedisResult::ptr result) {
         data[offset] = '\0';
         if (offset == buffer_size) {
             result->set_status(RedisStatus::READ_OVERFLOW);
+            result->set_err_desc("Err: Redis读缓存超出");
             m_status = RedisStatus::INVALID;
             close();
             break;
@@ -139,6 +140,7 @@ void RedisConnection::read_response(RedisResult::ptr result) {
             break;
         }
         if (result->is_parse_error()) {
+            result->set_err_desc("Err: Redis数据解析失败 " + std::string(data, offset));
             m_status = RedisStatus::INVALID;
             close();
             break;

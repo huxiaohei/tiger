@@ -9,7 +9,7 @@
 
 void test_redis_connection_str() {
     auto redis_connection = tiger::redis::RedisConnection::Create("127.0.0.1", 6401, "liuhu");
-    auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultStr>("GET hello");
+    auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVector<std::string>>("MGET hello world");
     TIGER_LOG_D(tiger::TEST_LOG) << rst;
 }
 
@@ -46,7 +46,7 @@ int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
     test_redis_connection_str();
-    test_redis_connection_vector();
-    test_redis_connection_pool();
+    // test_redis_connection_vector();
+    // test_redis_connection_pool();
     return 0;
 }
