@@ -124,9 +124,9 @@ class RedisResultVal : public RedisResult {
 
     friend std::ostream &operator<<(std::ostream &os, const RedisResultVal<T>::ptr rst) {
         if (rst->get_status() == RedisStatus::OK) {
-            os << "[" << rst->m_data << "]";
+            os << "[" << rst->get_status() << " " << rst->m_data << "]";
         } else {
-            os << "[" << rst->m_err_desc << "]";
+            os << "[" << rst->get_status() << " " << rst->m_err_desc << "]";
         }
         return os;
     }
@@ -200,8 +200,9 @@ class RedisResultVector : public RedisResult {
     std::vector<T> &get_data() { return m_data; };
 
     friend std::ostream &operator<<(std::ostream &os, const RedisResultVector<T>::ptr rst) {
+        os << "[ " << rst->get_status();
         if (rst->get_status() == RedisStatus::OK) {
-            os << "[";
+            os << " [";
             for (const auto &it : rst->m_data) {
                 os << it << ",";
             }
@@ -209,6 +210,7 @@ class RedisResultVector : public RedisResult {
         } else {
             os << rst->m_err_desc;
         }
+        os << "]";
         return os;
     }
 

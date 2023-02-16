@@ -28,7 +28,7 @@ class RedisConnectionPool {
     typedef std::shared_ptr<RedisConnectionPool> ptr;
 
     RedisConnectionPool(IPAddress::ptr addr, const std::string &password, int32_t max_size, bool ssl);
-    virtual ~RedisConnectionPool(){};
+    virtual ~RedisConnectionPool();
 
    public:
     int32_t get_conn_total() { return m_total; }
@@ -51,15 +51,15 @@ class RedisConnectionPool {
     bool RENAME(const std::string &old_key, const std::string &new_key);
     bool RENAMENX(const std::string &old_key, const std::string &new_key);
     bool PEXPIREAT(const std::string &key, time_t ts_ms);
-    bool EXPIREAT(const std::string &key, time_t ts_ms);
-    bool PEXPIRE(const std::string &key, time_t s);
+    bool EXPIREAT(const std::string &key, time_t ts_s);
+    bool PEXPIRE(const std::string &key, time_t ms);
     bool EXPIRE(const std::string &key, time_t s);
     bool PERSIST(const std::string &key);
     time_t TTL(const std::string &key);
     time_t PTTL(const std::string &key);
     std::string RANDOMKEY();
     std::string DUMP(const std::string &key);
-    std::string KEYS(const std::string &pattern);
+    std::vector<std::string> KEYS(const std::string &pattern);
 };
 
 }  // namespace redis

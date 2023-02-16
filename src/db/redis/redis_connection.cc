@@ -47,6 +47,7 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
 }
 
 RedisConnection::~RedisConnection() {
+    close();
 }
 
 RedisConnection::ptr RedisConnection::Create(
@@ -107,8 +108,12 @@ void RedisConnection::send_commond(const std::string &cmd, RedisResult::ptr resu
         result->set_err_desc("Err Redis connect fail");
         return;
     }
-    auto package = pack_commond(cmd);
-    write_fixed_size(package.c_str(), package.size());
+    if (cmd[0] == '*') {
+        write_fixed_size(cmd.c_str(), cmd.size());
+    } else {
+        auto package = pack_commond(cmd);
+        write_fixed_size(package.c_str(), package.size());
+    }
 }
 
 void RedisConnection::read_response(RedisResult::ptr result) {

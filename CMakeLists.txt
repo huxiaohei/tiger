@@ -114,3 +114,6 @@ target_link_libraries(test_ws_client ${LIBS})
 
 add_executable(test_redis tests/test_redis.cc)
 target_link_libraries(test_redis ${LIBS})
+
+add_executable(test_redis_pool tests/test_redis_pool.cc)
+target_link_libraries(test_redis_pool ${LIBS})
