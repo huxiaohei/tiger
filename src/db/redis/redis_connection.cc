@@ -27,7 +27,7 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
       m_status(RedisStatus::INVALID) {
     if (!socket->connect(addr, g_redis_connect_timeout->val())) {
         m_status = RedisStatus::CONNECT_FAIL;
-        TIGER_LOG_E(SYSTEM_LOG) << "[redis connect fail addr:" << *addr << "]";
+        TIGER_LOG_E(SYSTEM_LOG) << "[Redis connect fail [addr:" << *addr << "]]";
         return;
     }
     socket->set_recv_timeout(g_redis_recv_timeout->val());
@@ -104,6 +104,7 @@ std::string RedisConnection::pack_commond(const std::string &org_cmd) {
 void RedisConnection::send_commond(const std::string &cmd, RedisResult::ptr result, bool check_health) {
     if (check_health && !ping()) {
         result->set_status(RedisStatus::CONNECT_FAIL);
+        result->set_err_desc("Err Redis connect fail");
         return;
     }
     auto package = pack_commond(cmd);

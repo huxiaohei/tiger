@@ -72,6 +72,108 @@ RedisConnection::ptr RedisConnectionPool::get_connection() {
                                                 this));
 }
 
+bool RedisConnectionPool::SET(const std::string &key, const std::string &val) {
+    auto cmd = fmt::format("SET {} {}", key, val);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data() == "OK";
+}
+
+bool RedisConnectionPool::DEL(const std::string &key) {
+    auto cmd = fmt::format("DEL {}", key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+std::string RedisConnectionPool::TYPE(const std::string &key) {
+    auto cmd = fmt::format("TYPE {}", key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::EXISTS(const std::string &key) {
+    auto cmd = fmt::format("EXISTS {}", key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::MOVE(const std::string &key, const std::string &db) {
+    auto cmd = fmt::format("MOVE {} {}", key, db);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::RENAME(const std::string &old_key, const std::string &new_key) {
+    auto cmd = fmt::format("RENAME {} {}", old_key, new_key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::RENAMENX(const std::string &old_key, const std::string &new_key) {
+    auto cmd = fmt::format("RENAMENX {} {}", old_key, new_key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::PEXPIREAT(const std::string &key, time_t ts_ms) {
+    auto cmd = fmt::format("PEXPIREAT {} {}", key, ts_ms);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::EXPIREAT(const std::string &key, time_t ts_ms) {
+    auto cmd = fmt::format("EXPIREAT {} {}", key, ts_ms);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::PEXPIRE(const std::string &key, time_t s) {
+    auto cmd = fmt::format("PEXPIRE {} {}", key, s);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::EXPIRE(const std::string &key, time_t s) {
+    auto cmd = fmt::format("EXPIRE {} {}", key, s);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::PERSIST(const std::string &key) {
+    auto cmd = fmt::format("PERSIST {}", key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+time_t RedisConnectionPool::TTL(const std::string &key) {
+    auto cmd = fmt::format("TTL {}", key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<time_t>>(cmd);
+    return rst->get_data();
+}
+
+time_t RedisConnectionPool::PTTL(const std::string &key) {
+    auto cmd = fmt::format("PTTL {}", key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<time_t>>(cmd);
+    return rst->get_data();
+}
+
+std::string RedisConnectionPool::RANDOMKEY() {
+    auto cmd = fmt::format("RANDOMKEY");
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::string RedisConnectionPool::DUMP(const std::string &key) {
+    auto cmd = fmt::format("DUMP {}", key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::string RedisConnectionPool::KEYS(const std::string &pattern) {
+    auto cmd = fmt::format("KEYS {}", pattern);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data();
+}
+
 }  // namespace redis
 
 }  // namespace tiger

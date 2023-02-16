@@ -41,6 +41,25 @@ class RedisConnectionPool {
     static RedisConnectionPool::ptr Create(IPAddress::ptr addr, const std::string &password, int32_t max_size, bool ssl = false);
     static RedisConnectionPool::ptr Create(const std::string &host, int32_t port, const std::string &password, int32_t max_size, bool ssl = false);
     static void ReleaseConnPtr(RedisConnection *ptr, RedisConnectionPool *pool);
+
+   public:
+    bool SET(const std::string &key, const std::string &val);
+    bool DEL(const std::string &key);
+    std::string TYPE(const std::string &key);
+    bool EXISTS(const std::string &key);
+    bool MOVE(const std::string &key, const std::string &db);
+    bool RENAME(const std::string &old_key, const std::string &new_key);
+    bool RENAMENX(const std::string &old_key, const std::string &new_key);
+    bool PEXPIREAT(const std::string &key, time_t ts_ms);
+    bool EXPIREAT(const std::string &key, time_t ts_ms);
+    bool PEXPIRE(const std::string &key, time_t s);
+    bool EXPIRE(const std::string &key, time_t s);
+    bool PERSIST(const std::string &key);
+    time_t TTL(const std::string &key);
+    time_t PTTL(const std::string &key);
+    std::string RANDOMKEY();
+    std::string DUMP(const std::string &key);
+    std::string KEYS(const std::string &pattern);
 };
 
 }  // namespace redis

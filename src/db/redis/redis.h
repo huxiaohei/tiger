@@ -46,10 +46,18 @@ class RedisValTrans {
 };
 
 template <>
+class RedisValTrans<bool> {
+   public:
+    bool operator()(const char *s, int len) {
+        return !!std::atoi(std::string(s, len).c_str());
+    }
+};
+
+template <>
 class RedisValTrans<int> {
    public:
     int operator()(const char *s, int len) {
-        return std::atoi(s);
+        return std::atoi(std::string(s, len).c_str());
     }
 };
 
@@ -57,7 +65,7 @@ template <>
 class RedisValTrans<long int> {
    public:
     long int operator()(const char *s, int len) {
-        return std::atol(s);
+        return std::atol(std::string(s, len).c_str());
     }
 };
 

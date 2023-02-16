@@ -3,10 +3,15 @@ project(TIGER)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -rdynamic -g -ggdb -std=c++11 -lssl -Wall -Wno-deprecated -Werror -Wno-unused-function")
 set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -rdynamic -g -ggdb -std=c++11 -lssl -Wall -Wno-deprecated -Werror -Wno-unused-function")
 
 find_library(YAMLCPP yaml-cpp)
+find_library(FMT fmt)
+
+message(${YAMLCPP})
+message(${FMT})
 
 set(LIB_SRC
     src/log.cc
@@ -51,7 +56,10 @@ add_library(TIGER SHARED ${LIB_SRC})
 set(LIBS
     TIGER
     ${YAMLCPP}
+    ${FMT}
 )
+
+message(${LIBS})
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)

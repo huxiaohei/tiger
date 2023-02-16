@@ -8,9 +8,16 @@
 #include "../src/db/redis/redis_connection_pool.h"
 
 void test_redis_connection_str() {
-    auto redis_connection = tiger::redis::RedisConnection::Create("127.0.0.1", 6401, "liuhu");
-    auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVal<std::string>>("GET hello");
-    TIGER_LOG_D(tiger::TEST_LOG) << rst;
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestSubThread", true, 2);
+    iom->schedule([iom]() {
+        auto redis_connection = tiger::redis::RedisConnection::Create("127.0.0.1", 6401, "liuhu");
+        auto rst = redis_connection->exec_cmd<tiger::redis::RedisResultVal<std::string>>("GET hello");
+        TIGER_LOG_D(tiger::TEST_LOG) << rst;
+    });
+    iom->add_timer(1000, [iom]() {
+        iom->stop();
+    });
+    iom->start();
 }
 
 void test_redis_connection_vector() {
@@ -22,31 +29,17 @@ void test_redis_connection_vector() {
             auto del_rst = redis_connection->exec_cmd<tiger::redis::RedisResultVal<int>>("DEL " + it);
             TIGER_LOG_D(tiger::TEST_LOG) << del_rst;
         }
+    });
+    iom->add_timer(10000, [iom]() {
         iom->stop();
     });
     iom->start();
-}
-
-void test_redis_connection_pool() {
-    auto iom = std::make_shared<tiger::IOManager>("RedisTestSubThread", true, 4);
-    auto redis_connection_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 10);
-    for (int i = 0; i < 5000; ++i) {
-        iom->add_timer(i, [redis_connection_pool, i]() {
-            redis_connection_pool->get_connection()->exec_cmd<tiger::redis::RedisResultVal<std::string>>("SET idx" + std::to_string(i) + " " + std::to_string(i));
-        });
-    }
-    iom->add_timer(15000, [iom, redis_connection_pool]() {
-        iom->stop();
-    });
-    iom->start();
-    TIGER_LOG_D(tiger::TEST_LOG) << "redis conn client cnt:" << redis_connection_pool->get_conn_total();
 }
 
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
     // test_redis_connection_str();
-    // test_redis_connection_vector();
-    // test_redis_connection_pool();
+    test_redis_connection_vector();
     return 0;
 }
