@@ -75,3 +75,17 @@ if not os.popen('yum list installed | grep boost-devel.x86_64').readline():
     print('sudo yum -y install boost-devel')
 else:
     print(os.popen('yum list installed | grep boost-devel.x86_64').readline())
+
+if not os.popen('locate libfmt.a | grep libfmt.a').readline():
+    print('Please install fmt. You can run this code')
+    print('cd')
+    print('wget https://github.com/fmtlib/fmt/archive/refs/tags/9.1.0.tar.gz')
+    print('tar -xzvf 9.1.0.tar.gz')
+    print('cd fmt-9.1.0')
+    print('mkdir build')
+    print('cd build')
+    print('cmake ..')
+    print('make -j4')
+    print('sudo make install')
+else:
+    print(os.popen('yum list installed | grep boost-devel.x86_64').readline())

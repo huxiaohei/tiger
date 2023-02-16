@@ -7,7 +7,8 @@
 * cmake version 3.20.2
 * yaml-cpp version 0.6.2
 * g++ version 11.3.1
-* OpenSSL version 3.0.1 14
+* OpenSSL version 3.0.1
+* fmt version 9.1.0
 
 ## 说明文档
 
