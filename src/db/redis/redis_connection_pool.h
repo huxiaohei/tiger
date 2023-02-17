@@ -43,9 +43,10 @@ class RedisConnectionPool {
     static void ReleaseConnPtr(RedisConnection *ptr, RedisConnectionPool *pool);
 
    public:
-    bool SET(const std::string &key, const std::string &val);
+    bool PING();
+
     bool DEL(const std::string &key);
-    std::string TYPE(const std::string &key);
+    std::string &TYPE(const std::string &key);
     bool EXISTS(const std::string &key);
     bool MOVE(const std::string &key, const std::string &db);
     bool RENAME(const std::string &old_key, const std::string &new_key);
@@ -57,9 +58,54 @@ class RedisConnectionPool {
     bool PERSIST(const std::string &key);
     time_t TTL(const std::string &key);
     time_t PTTL(const std::string &key);
-    std::string RANDOMKEY();
-    std::string DUMP(const std::string &key);
-    std::vector<std::string> KEYS(const std::string &pattern);
+    std::string &RANDOMKEY();
+    std::string &DUMP(const std::string &key);
+    std::vector<std::string> &KEYS(const std::string &pattern);
+
+    bool SET(const std::string &key, const std::string &val);
+    bool SETNX(const std::string &key, const std::string &val);
+    bool MSET(size_t n, ...);
+    bool MSET(const std::vector<std::pair<std::string, std::string>> &keys);
+    bool MSETNX(size_t n, ...);
+    bool MSETNX(const std::vector<std::pair<std::string, std::string>> &keys);
+    bool SETEX(const std::string &key, time_t s, const std::string &val);
+    bool PSETEX(const std::string &key, time_t ms, const std::string &val);
+    int SETBIT(const std::string &key, int offset, int val);
+    int SETRANGE(const std::string &key, int offset, std::string &val);
+    size_t APPEND(const std::string &key, std::string &val);
+    long int INCR(const std::string &key);
+    long int INCRBY(const std::string &key, long int val);
+    double INCRBYFLOAT(const std::string &key, double val);
+    long int DECR(const std::string &key);
+    long int DECRBY(const std::string &key, long int val);
+    std::string &GETSET(const std::string &key, const std::string &val);
+    std::string &GET(const std::string &key);
+    template <typename T>
+    std::vector<T> &MGET(size_t n, ...) {
+        std::string cmd = fmt::format("*{}\r\n$4\r\nMGET\r\n", n + 1);
+        va_list li;
+        va_start(li, n);
+        char *key = nullptr;
+        for (size_t i = 0; i < n; ++i) {
+            key = va_arg(li, char *);
+            cmd += fmt::format("${}\r\n{}\r\n", strlen(key), key);
+        }
+        va_end(li);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+        return rst->get_data();
+    }
+    template <typename T>
+    std::vector<T> &MGET(const std::vector<std::string> &keys) {
+        std::string cmd = fmt::format("*{}\r\n$4\r\nMGET\r\n", keys.size() + 1);
+        for (auto &key : keys) {
+            cmd += fmt::format("${}\r\n{}\r\n", key.size(), key);
+        }
+        auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+        return rst->get_data();
+    }
+    int GETBIT(const std::string &key, int offset);
+    std::string &GETRANGE(const std::string &key, int start, int end);
+    int STRLEN(const std::string &key);
 };
 
 }  // namespace redis

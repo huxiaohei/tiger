@@ -46,15 +46,12 @@ class RedisConnection : public SocketStream {
         auto rst = std::make_shared<T>();
         send_commond(cmd, rst, check_health);
         if (rst->get_status() == RedisStatus::CONNECT_FAIL) {
-            throw std::runtime_error(fmt::format("[Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
+            throw std::runtime_error(fmt::format("Err [Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
             return rst;
         }
         read_response(rst);
-        if (rst->get_status() != RedisStatus::OK) {
-            TIGER_LOG_W(SYSTEM_LOG) << "[Redis exec [" << cmd << "]"
-                                    << " => [" << rst->get_status()
-                                    << " " << rst->get_err_desc() << "]";
-            throw std::runtime_error(fmt::format("[Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
+        if (rst->get_status() < 0) {
+            throw std::runtime_error(fmt::format("Err [Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
         }
         return rst;
     }

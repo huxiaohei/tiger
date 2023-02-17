@@ -26,15 +26,15 @@ namespace redis {
 #define TIGER_REDIS_CMD_GET "GET"
 
 enum RedisStatus {
-    OK = 0,
+    NIL_ERROR = 2,
+    OK = 1,
     INVALID = -1,
     CONNECT_FAIL = -2,
     AUTH_FAIL = -3,
     REPLY_ERROR = -4,
-    NIL_ERROR = -5,
     PARSE_ERROR = -5,
-    READ_OVERFLOW = -7,
-    TIMEOUT = -8
+    READ_OVERFLOW = -6,
+    TIMEOUT = -7
 };
 
 template <typename T>
