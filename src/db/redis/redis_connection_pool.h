@@ -44,7 +44,7 @@ class RedisConnectionPool {
 
    public:
     bool PING();
-
+    /********************************************************** Key **********************************************************/
     bool DEL(const std::string &key);
     std::string TYPE(const std::string &key);
     bool EXISTS(const std::string &key);
@@ -61,7 +61,9 @@ class RedisConnectionPool {
     std::string RANDOMKEY();
     std::string DUMP(const std::string &key);
     std::vector<std::string> KEYS(const std::string &pattern);
+    /********************************************************** Key **********************************************************/
 
+    /********************************************************** String **********************************************************/
     bool SET(const std::string &key, const std::string &val);
     bool SETNX(const std::string &key, const std::string &val);
     bool MSET(size_t n, ...);
@@ -116,7 +118,9 @@ class RedisConnectionPool {
     int GETBIT(const std::string &key, int offset);
     std::string GETRANGE(const std::string &key, int start, int end);
     int STRLEN(const std::string &key);
+    /********************************************************** String **********************************************************/
 
+    /********************************************************** Hash **********************************************************/
     size_t HDEL(const std::string &key, size_t n, ...);
     int HSET(const std::string &key, const std::string &field, const std::string &val);
     bool HMSET(const std::string &key, size_t n, ...);
@@ -148,6 +152,48 @@ class RedisConnectionPool {
         auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
         return rst->get_data();
     }
+    /********************************************************** Hash **********************************************************/
+
+    /********************************************************** List **********************************************************/
+    template <typename T>
+    T LPOP(const std::string &list) {
+        std::string cmd = fmt::format("*2\r\n$4\r\nLPOP\r\n${}\r\n{}\r\n", list.size(), list);
+        auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
+        return rst->get_data();
+    }
+    template <typename T>
+    T RPOP(const std::string &list) {
+        std::string cmd = fmt::format("*2\r\n$4\r\nRPOP\r\n${}\r\n{}\r\n", list.size(), list);
+        auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
+        return rst->get_data();
+    }
+    std::vector<std::string> BLPOP(time_t timeout, size_t n, ...);
+    std::vector<std::string> BRPOP(time_t timeout, size_t n, ...);
+    std::vector<std::string> BRPOPLPUSH(const std::string &list, const std::string &another_list, time_t timeout);
+    std::vector<std::string> RPOPLPUSH(const std::string &list, const std::string &another_list);
+    size_t LPUSH(const std::string &list, size_t n, ...);
+    size_t RPUSH(const std::string &list, size_t n, ...);
+    size_t LPUSHX(const std::string &list, size_t n, ...);
+    size_t RPUSHX(const std::string &list, size_t n, ...);
+    int64_t LINSERTBEFORE(const std::string &list, const std::string &exist, const std::string &val);
+    int64_t LINSERTAFTER(const std::string &list, const std::string &exist, const std::string &val);
+    bool LSET(const std::string &list, size_t idx, const std::string &val);
+    template <typename T>
+    T LINDEX(const std::string &list, size_t idx) {
+        std::string cmd = fmt::format("*3\r\n$6\r\nLINDEX\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, std::to_string(idx).size(), idx);
+        auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
+        return rst->get_data();
+    }
+    template <typename T>
+    std::vector<T> LRANGE(const std::string &list, int64_t start, int64_t end) {
+        std::string cmd = fmt::format("*4\r\n$6\r\nLRANGE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, std::to_string(start).size(), start, std::to_string(end).size(), end);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
+        return rst->get_data();
+    }
+    size_t LREM(const std::string &list, int64_t count, const std::string &val);
+    bool LTRIM(const std::string &list, int64_t start, int64_t end);
+    size_t LLEN(const std::string &list);
+    /********************************************************** List **********************************************************/
 };
 
 }  // namespace redis

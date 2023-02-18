@@ -172,11 +172,83 @@ void test_hash() {
     iom->start();
 }
 
+void test_list() {
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestString", true, 2);
+    auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
+    iom->schedule([conns_pool, iom]() {
+        auto cout_func = [](std::vector<std::string> rst) {
+            std::stringstream ss;
+            ss << "[ ";
+            for (auto &it : rst) {
+                ss << it << " ";
+            }
+            ss << "]";
+            TIGER_LOG_D(tiger::TEST_LOG) << ss.str();
+        };
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPUSH("list", 3, "python", "java", "C++");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPUSH("list", 3, "mysql", "redis", "mongo");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->RPUSH("list", 3, "vscode", "vim", "sublime");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPUSHX("not exist list", 3, "mysql", "redis", "mongo");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->EXISTS("not exist list");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPUSHX("list", 3, "1", "2", "3");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->RPUSHX("not exist list", 3, "mysql", "redis", "mongo");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->EXISTS("not exist list");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->RPUSHX("list", 3, "1", "2", "3");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LINSERTBEFORE("list", "C++", "Hello_before_C++");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LINSERTAFTER("list", "C++", "Hello_after_C++");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LINSERTAFTER("list", "not exist", "Hello_after_not_exit");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LINSERTAFTER("list", "not exist", "Hello_after_not_exit");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LSET("list", 2, "new_index_2");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LINDEX<std::string>("list", 2);
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LINDEX<std::string>("list", 2000);
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LREM("list", 1, "C++");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LREM("list", 2, "3");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LREM("list", -1, "2");
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LTRIM("list", 3, 4);
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LLEN("list");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPOP<std::string>("list");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->RPOP<std::string>("list");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LLEN("list");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPOP<std::string>("list");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->RPOP<std::string>("list");
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPUSH("list1", 1, "Hello");
+        // cout_func(conns_pool->BLPOP(400, 1, "list1"));
+        // cout_func(conns_pool->BLPOP(4000, 1, "list1"));
+        // cout_func(conns_pool->BLPOP(40000, 1, "list1"));
+        cout_func(conns_pool->BRPOP(400, 1, "list1"));
+        cout_func(conns_pool->BRPOP(4000, 1, "list1"));
+        cout_func(conns_pool->BRPOP(40000, 1, "list1"));
+
+        auto all_keys = conns_pool->KEYS("*");
+        for (auto &it : all_keys) {
+            conns_pool->DEL(it);
+        }
+        iom->stop();
+    });
+    iom->start();
+}
+
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
     // test_key();
     // test_string();
-    test_hash();
+    // test_hash();
+    test_list();
     return 0;
 }

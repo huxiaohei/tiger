@@ -24,7 +24,8 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
       m_addr(addr),
       m_password(pwd),
       m_last_rtime(-1),
-      m_status(RedisStatus::INVALID) {
+      m_status(RedisStatus::INVALID),
+      m_timeout(0) {
     if (!socket->connect(addr, g_redis_connect_timeout->val())) {
         m_status = RedisStatus::CONNECT_FAIL;
         TIGER_LOG_E(SYSTEM_LOG) << "[Redis connect fail [addr:" << *addr << "]]";
@@ -33,7 +34,7 @@ RedisConnection::RedisConnection(Socket::ptr socket, IPAddress::ptr addr, const 
     socket->set_recv_timeout(g_redis_recv_timeout->val());
     socket->set_send_timeout(g_redis_send_timeout->val());
     if (!m_password.empty()) {
-        auto rst = exec_cmd<RedisResultVal<std::string>>("AUTH " + m_password, false);
+        auto rst = exec_cmd<RedisResultVal<std::string>>("AUTH " + m_password, 0, false);
         if (rst->is_ok()) {
             m_status = RedisStatus::OK;
         } else {
@@ -76,13 +77,20 @@ bool RedisConnection::ping(bool force) {
     auto now = Second();
     if (TIGER_UNLIKELY(m_status != RedisStatus::OK)) return false;
     if (force || (now - m_last_rtime > g_redis_ping->val())) {
-        auto rst = exec_cmd<RedisResultVal<std::string>>(TIGER_REDIS_CMD_PING, false);
+        auto rst = exec_cmd<RedisResultVal<std::string>>(TIGER_REDIS_CMD_PING, 0, false);
         if (TIGER_UNLIKELY(rst->get_data() != "PONG")) {
             m_status = RedisStatus::CONNECT_FAIL;
             return false;
         }
     }
     return true;
+}
+
+void RedisConnection::reset_timeout() {
+    if (m_timeout > 0) {
+        get_socket()->set_recv_timeout(g_redis_recv_timeout->val());
+        get_socket()->set_send_timeout(g_redis_send_timeout->val());
+    }
 }
 
 std::string RedisConnection::pack_commond(const std::string &org_cmd) {

@@ -25,6 +25,7 @@ class RedisConnection : public SocketStream {
     std::string m_password;
     time_t m_last_rtime;
     RedisStatus m_status;
+    time_t m_timeout;
 
    protected:
     std::string pack_commond(const std::string &org_cmd);
@@ -41,17 +42,27 @@ class RedisConnection : public SocketStream {
     bool is_ok();
     bool ping(bool force = false);
 
+    void reset_timeout();
+
     template <typename T>
-    std::shared_ptr<T> exec_cmd(const std::string &cmd, bool check_health = true) {
+    std::shared_ptr<T> exec_cmd(const std::string &cmd, time_t timeout = 0, bool check_health = true) {
         auto rst = std::make_shared<T>();
         send_commond(cmd, rst, check_health);
         if (rst->get_status() == RedisStatus::CONNECT_FAIL) {
             throw std::runtime_error(fmt::format("Err [Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
             return rst;
         }
+        if (timeout > 0) {
+            m_timeout = timeout + get_socket()->get_recv_timeout();
+            get_socket()->set_recv_timeout(m_timeout);
+        }
         read_response(rst);
         if (rst->get_status() < 0) {
-            throw std::runtime_error(fmt::format("Err [Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
+            if (rst->get_status() == RedisStatus::TIMEOUT && timeout > 0) {
+                return rst;
+            } else {
+                throw std::runtime_error(fmt::format("Err [Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
+            }
         }
         return rst;
     }

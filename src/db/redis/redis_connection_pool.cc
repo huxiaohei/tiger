@@ -31,6 +31,7 @@ void RedisConnectionPool::ReleaseConnPtr(RedisConnection *conn, RedisConnectionP
         return;
     }
     MutexLock::Lock lock(pool->m_mutex);
+    conn->reset_timeout();
     pool->m_conns.push_back(conn);
 }
 
@@ -86,6 +87,7 @@ bool RedisConnectionPool::PING() {
     return rst->get_data() == "PONG";
 }
 
+/********************************************************** Key **********************************************************/
 bool RedisConnectionPool::DEL(const std::string &key) {
     auto cmd = fmt::format("*2\r\n$3\r\nDEL\r\n${}\r\n{}\r\n", key.size(), key);
     auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
@@ -181,9 +183,9 @@ std::vector<std::string> RedisConnectionPool::KEYS(const std::string &pattern) {
     auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
     return rst->get_data();
 }
+/********************************************************** Key **********************************************************/
 
 /********************************************************** String **********************************************************/
-
 bool RedisConnectionPool::SET(const std::string &key, const std::string &val) {
     auto cmd = fmt::format("*3\r\n$3\r\nSET\r\n${}\r\n{}\r\n${}\r\n{}\r\n", key.size(), key, val.size(), val);
     auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
@@ -323,11 +325,9 @@ int RedisConnectionPool::STRLEN(const std::string &key) {
     auto rst = get_connection()->exec_cmd<RedisResultVal<int>>(cmd);
     return rst->get_data();
 }
-
 /********************************************************** String **********************************************************/
 
 /********************************************************** Hash **********************************************************/
-
 size_t RedisConnectionPool::HDEL(const std::string &key, size_t n, ...) {
     std::string cmd = fmt::format("*{}\r\n$4\r\nHDEL\r\n${}\r\n{}\r\n", n + 2, key.size(), key);
     va_list li;
@@ -410,8 +410,144 @@ std::vector<std::string> RedisConnectionPool::HGETALL(const std::string &key) {
     auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
     return rst->get_data();
 }
-
 /********************************************************** Hash **********************************************************/
+
+/********************************************************** List **********************************************************/
+std::vector<std::string> RedisConnectionPool::BLPOP(time_t timeout, size_t n, ...) {
+
+    std::string cmd = fmt::format("*{}\r\n$5\r\nBLPOP\r\n", n + 2);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    cmd += fmt::format("${}\r\n{}\r\n", std::to_string(timeout).size(), timeout);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::BRPOP(time_t timeout, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$5\r\nBRPOP\r\n", n + 2);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    cmd += fmt::format("${}\r\n{}\r\n", std::to_string(timeout).size(), timeout);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::BRPOPLPUSH(const std::string &list, const std::string &another_list, time_t timeout) {
+    std::string cmd = fmt::format("*4\r\n$10\r\nBRPOPLPUSH\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, another_list.size(), another_list, std::to_string(timeout).size(), timeout);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::RPOPLPUSH(const std::string &list, const std::string &another_list) {
+    std::string cmd = fmt::format("*3\r\n$9\r\nRPOPLPUSH\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, another_list.size(), another_list);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::LPUSH(const std::string &list, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$5\r\nLPUSH\r\n${}\r\n{}\r\n", n + 2, list.size(), list);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::RPUSH(const std::string &list, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$5\r\nRPUSH\r\n${}\r\n{}\r\n", n + 2, list.size(), list);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::LPUSHX(const std::string &list, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$6\r\nLPUSHX\r\n${}\r\n{}\r\n", n + 2, list.size(), list);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::RPUSHX(const std::string &list, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$6\r\nRPUSHX\r\n${}\r\n{}\r\n", n + 2, list.size(), list);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+int64_t RedisConnectionPool::LINSERTBEFORE(const std::string &list, const std::string &exist, const std::string &val) {
+    std::string cmd = fmt::format("*5\r\n$7\r\nLINSERT\r\n${}\r\n{}\r\n$6\r\nBEFORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, exist.size(), exist, val.size(), val);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int64_t>>(cmd);
+    return rst->get_data();
+}
+
+int64_t RedisConnectionPool::LINSERTAFTER(const std::string &list, const std::string &exist, const std::string &val) {
+    std::string cmd = fmt::format("*5\r\n$7\r\nLINSERT\r\n${}\r\n{}\r\n$5\r\nAFTER\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, exist.size(), exist, val.size(), val);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int64_t>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::LSET(const std::string &list, size_t idx, const std::string &val) {
+    std::string cmd = fmt::format("*4\r\n$4\r\nLSET\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, std::to_string(idx).size(), idx, val.size(), val);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data() == "OK";
+}
+
+size_t RedisConnectionPool::LREM(const std::string &list, int64_t count, const std::string &val) {
+    std::string cmd = fmt::format("*4\r\n$4\r\nLREM\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, std::to_string(count).size(), count, val.size(), val);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::LTRIM(const std::string &list, int64_t start, int64_t end) {
+    std::string cmd = fmt::format("*4\r\n$5\r\nLTRIM\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, std::to_string(start).size(), start, std::to_string(end).size(), end);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data() == "OK";
+}
+
+size_t RedisConnectionPool::LLEN(const std::string &list) {
+    std::string cmd = fmt::format("*2\r\n$4\r\nLLEN\r\n${}\r\n{}\r\n", list.size(), list);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+/********************************************************** List **********************************************************/
 
 }  // namespace redis
 
