@@ -177,6 +177,7 @@ class RedisResultVal : public RedisResult {
                 break;
             }
             default:
+                m_err_desc = std::string(s, len);
                 set_parse_finished(true);
                 set_status(RedisStatus::PARSE_ERROR);
                 break;
@@ -227,9 +228,26 @@ class RedisResultVector : public RedisResult {
                 }
                 break;
             }
+            case '$': {
+                int digit = std::atoi(s + 1);
+                if (digit == -1 && std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+                    m_err_desc = "nil";
+                    set_parse_finished(true);
+                    set_status(RedisStatus::NIL_ERROR);
+                } else {
+                    if (len - digit - 2 == 1 + 1 + (int)floor(log10(digit)) + 2) {
+                        m_data.push_back(RedisValTrans<T>()(s + (len - digit - 2), digit));
+                        set_parse_finished(true);
+                        set_status(RedisStatus::OK);
+                    } else {
+                        set_parse_finished(false);
+                    }
+                }
+                break;
+            }
             case '*': {
                 int rst_size = std::atoi(s + 1);
-                if (rst_size == 0) {
+                if (rst_size <= 0) {
                     if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
                         m_parse_len = len;
                         set_parse_finished(true);
@@ -266,6 +284,7 @@ class RedisResultVector : public RedisResult {
                 break;
             }
             default:
+                m_err_desc = std::string(s, len);
                 set_parse_finished(true);
                 set_status(RedisStatus::PARSE_ERROR);
                 break;

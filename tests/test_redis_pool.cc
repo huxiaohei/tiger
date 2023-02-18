@@ -227,12 +227,19 @@ void test_list() {
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->RPOP<std::string>("list");
 
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->LPUSH("list1", 1, "Hello");
-        // cout_func(conns_pool->BLPOP(400, 1, "list1"));
-        // cout_func(conns_pool->BLPOP(4000, 1, "list1"));
+        cout_func(conns_pool->BLPOP(400, 1, "list1"));
+        cout_func(conns_pool->BLPOP(9000, 1, "list1"));
         // cout_func(conns_pool->BLPOP(40000, 1, "list1"));
-        cout_func(conns_pool->BRPOP(400, 1, "list1"));
-        cout_func(conns_pool->BRPOP(4000, 1, "list1"));
-        cout_func(conns_pool->BRPOP(40000, 1, "list1"));
+        // cout_func(conns_pool->BRPOP(400, 1, "list1"));
+        // cout_func(conns_pool->BRPOP(4000, 1, "list1"));
+        // cout_func(conns_pool->BRPOP(40000, 1, "list1"));
+
+        cout_func(conns_pool->LRANGE<std::string>("list1", 0, -1));
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
+        // TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->RPOPLPUSH<std::string>("list1", "list");
+        cout_func(conns_pool->BRPOPLPUSH<std::string>("list", "list1", 9000));
+        cout_func(conns_pool->LRANGE<std::string>("list1", 0, -1));
+        cout_func(conns_pool->LRANGE<std::string>("list", 0, -1));
 
         auto all_keys = conns_pool->KEYS("*");
         for (auto &it : all_keys) {

@@ -413,8 +413,8 @@ std::vector<std::string> RedisConnectionPool::HGETALL(const std::string &key) {
 /********************************************************** Hash **********************************************************/
 
 /********************************************************** List **********************************************************/
-std::vector<std::string> RedisConnectionPool::BLPOP(time_t timeout, size_t n, ...) {
-
+std::vector<std::string> RedisConnectionPool::BLPOP(time_t timeout_ms, size_t n, ...) {
+    time_t timeout = timeout_ms / 1000;
     std::string cmd = fmt::format("*{}\r\n$5\r\nBLPOP\r\n", n + 2);
     va_list li;
     va_start(li, n);
@@ -425,11 +425,12 @@ std::vector<std::string> RedisConnectionPool::BLPOP(time_t timeout, size_t n, ..
     }
     va_end(li);
     cmd += fmt::format("${}\r\n{}\r\n", std::to_string(timeout).size(), timeout);
-    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout_ms);
     return rst->get_data();
 }
 
-std::vector<std::string> RedisConnectionPool::BRPOP(time_t timeout, size_t n, ...) {
+std::vector<std::string> RedisConnectionPool::BRPOP(time_t timeout_ms, size_t n, ...) {
+    time_t timeout = timeout_ms / 1000;
     std::string cmd = fmt::format("*{}\r\n$5\r\nBRPOP\r\n", n + 2);
     va_list li;
     va_start(li, n);
@@ -440,19 +441,7 @@ std::vector<std::string> RedisConnectionPool::BRPOP(time_t timeout, size_t n, ..
     }
     va_end(li);
     cmd += fmt::format("${}\r\n{}\r\n", std::to_string(timeout).size(), timeout);
-    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout);
-    return rst->get_data();
-}
-
-std::vector<std::string> RedisConnectionPool::BRPOPLPUSH(const std::string &list, const std::string &another_list, time_t timeout) {
-    std::string cmd = fmt::format("*4\r\n$10\r\nBRPOPLPUSH\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, another_list.size(), another_list, std::to_string(timeout).size(), timeout);
-    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout);
-    return rst->get_data();
-}
-
-std::vector<std::string> RedisConnectionPool::RPOPLPUSH(const std::string &list, const std::string &another_list) {
-    std::string cmd = fmt::format("*3\r\n$9\r\nRPOPLPUSH\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, another_list.size(), another_list);
-    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd, timeout_ms);
     return rst->get_data();
 }
 

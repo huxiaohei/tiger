@@ -167,10 +167,21 @@ class RedisConnectionPool {
         auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
         return rst->get_data();
     }
-    std::vector<std::string> BLPOP(time_t timeout, size_t n, ...);
-    std::vector<std::string> BRPOP(time_t timeout, size_t n, ...);
-    std::vector<std::string> BRPOPLPUSH(const std::string &list, const std::string &another_list, time_t timeout);
-    std::vector<std::string> RPOPLPUSH(const std::string &list, const std::string &another_list);
+    std::vector<std::string> BLPOP(time_t timeout_ms, size_t n, ...);
+    std::vector<std::string> BRPOP(time_t timeout_ms, size_t n, ...);
+    template <typename T>
+    T RPOPLPUSH(const std::string &list, const std::string &another_list) {
+        std::string cmd = fmt::format("*3\r\n$9\r\nRPOPLPUSH\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, another_list.size(), another_list);
+        auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
+        return rst->get_data();
+    }
+    template <typename T>
+    std::vector<T> BRPOPLPUSH(const std::string &list, const std::string &another_list, time_t timeout_ms) {
+        time_t timeout = timeout_ms / 1000;
+        std::string cmd = fmt::format("*4\r\n$10\r\nBRPOPLPUSH\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", list.size(), list, another_list.size(), another_list, std::to_string(timeout).size(), timeout);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd, timeout_ms);
+        return rst->get_data();
+    }
     size_t LPUSH(const std::string &list, size_t n, ...);
     size_t RPUSH(const std::string &list, size_t n, ...);
     size_t LPUSHX(const std::string &list, size_t n, ...);

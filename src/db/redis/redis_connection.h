@@ -59,6 +59,7 @@ class RedisConnection : public SocketStream {
         read_response(rst);
         if (rst->get_status() < 0) {
             if (rst->get_status() == RedisStatus::TIMEOUT && timeout > 0) {
+                TIGER_LOG_W(SYSTEM_LOG) << fmt::format("Err [Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc());
                 return rst;
             } else {
                 throw std::runtime_error(fmt::format("Err [Redis exec [{}] => [{} {}]", cmd, rst->get_status(), rst->get_err_desc()));
