@@ -116,6 +116,38 @@ class RedisConnectionPool {
     int GETBIT(const std::string &key, int offset);
     std::string GETRANGE(const std::string &key, int start, int end);
     int STRLEN(const std::string &key);
+
+    size_t HDEL(const std::string &key, size_t n, ...);
+    int HSET(const std::string &key, const std::string &field, const std::string &val);
+    bool HMSET(const std::string &key, size_t n, ...);
+    int HSETNX(const std::string &key, const std::string &field, const std::string &val);
+    int HINCRBY(const std::string &key, const std::string &field, int incr_by_number);
+    double HINCRBYFLOAT(const std::string &key, const std::string &field, double incr_by_number);
+    bool HEXISTS(const std::string &key, const std::string &field);
+    std::vector<std::string> HKEYS(const std::string &key);
+    size_t HLEN(const std::string &key);
+    std::vector<std::string> HVALS(const std::string &key);
+    std::vector<std::string> HGETALL(const std::string &key);
+    template <typename T>
+    T HGET(const std::string &key, const std::string &field) {
+        std::string cmd = fmt::format("*3\r\n$4\r\nHGET\r\n${}\r\n{}\r\n${}\r\n{}\r\n", key.size(), key, field.size(), field);
+        auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
+        return rst->get_data();
+    }
+    template <typename T>
+    std::vector<T> HMGET(const std::string &key, size_t n, ...) {
+        std::string cmd = fmt::format("*{}\r\n$5\r\nHMGET\r\n${}\r\n{}\r\n", n + 2, key.size(), key);
+        va_list li;
+        va_start(li, n);
+        char *field = nullptr;
+        for (size_t i = 0; i < n; ++i) {
+            field = va_arg(li, char *);
+            cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+        }
+        va_end(li);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
+        return rst->get_data();
+    }
 };
 
 }  // namespace redis

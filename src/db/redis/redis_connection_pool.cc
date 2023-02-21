@@ -326,6 +326,93 @@ int RedisConnectionPool::STRLEN(const std::string &key) {
 
 /********************************************************** String **********************************************************/
 
+/********************************************************** Hash **********************************************************/
+
+size_t RedisConnectionPool::HDEL(const std::string &key, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$4\r\nHDEL\r\n${}\r\n{}\r\n", n + 2, key.size(), key);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+int RedisConnectionPool::HSET(const std::string &key, const std::string &field, const std::string &val) {
+    std::string cmd = fmt::format("*4\r\n$4\r\nHSET\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", key.size(), key, field.size(), field, val.size(), val);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::HMSET(const std::string &key, size_t n, ...) {
+    n *= 2;
+    std::string cmd = fmt::format("*{}\r\n$5\r\nHMSET\r\n${}\r\n{}\r\n", n + 2, key.size(), key);
+    va_list li;
+    va_start(li, n);
+    char *field = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        field = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data() == "OK";
+}
+
+int RedisConnectionPool::HSETNX(const std::string &key, const std::string &field, const std::string &val) {
+    std::string cmd = fmt::format("*4\r\n$6\r\nHSETNX\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", key.size(), key, field.size(), field, val.size(), val);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int>>(cmd);
+    return rst->get_data();
+}
+
+int RedisConnectionPool::HINCRBY(const std::string &key, const std::string &field, int incr_by_number) {
+    std::string cmd = fmt::format("*4\r\n$7\r\nHINCRBY\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", key.size(), key, field.size(), field, std::to_string(incr_by_number), incr_by_number);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int>>(cmd);
+    return rst->get_data();
+}
+
+double RedisConnectionPool::HINCRBYFLOAT(const std::string &key, const std::string &field, double incr_by_number) {
+    std::string cmd = fmt::format("*4\r\n$12\r\nHINCRBYFLOAT\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{:.6f}\r\n", key.size(), key, field.size(), field, std::to_string(incr_by_number).size(), incr_by_number);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<double>>(cmd);
+    return rst->get_data();
+}
+
+bool RedisConnectionPool::HEXISTS(const std::string &key, const std::string &field) {
+    std::string cmd = fmt::format("*3\r\n$7\r\nHEXISTS\r\n${}\r\n{}\r\n${}\r\n{}\r\n", key.size(), key, field.size(), field);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<bool>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::HKEYS(const std::string &key) {
+    std::string cmd = fmt::format("*2\r\n$5\r\nHKEYS\r\n${}\r\n{}\r\n", key.size(), key);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::HLEN(const std::string &key) {
+    std::string cmd = fmt::format("*2\r\n$4\r\nHLEN\r\n${}\r\n{}\r\n", key.size(), key);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::HVALS(const std::string &key) {
+    std::string cmd = fmt::format("*2\r\n$5\r\nHVALS\r\n${}\r\n{}\r\n", key.size(), key);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::HGETALL(const std::string &key) {
+    std::string cmd = fmt::format("*2\r\n$7\r\nHGETALL\r\n${}\r\n{}\r\n", key.size(), key);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+/********************************************************** Hash **********************************************************/
+
 }  // namespace redis
 
 }  // namespace tiger
