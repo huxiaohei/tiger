@@ -173,7 +173,7 @@ void test_hash() {
 }
 
 void test_list() {
-    auto iom = std::make_shared<tiger::IOManager>("RedisTestString", true, 2);
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestList", true, 2);
     auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
     iom->schedule([conns_pool, iom]() {
         auto cout_func = [](std::vector<std::string> rst) {
@@ -250,12 +250,77 @@ void test_list() {
     iom->start();
 }
 
+void test_set() {
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 2);
+    auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
+    iom->schedule([conns_pool, iom]() {
+        auto cout_func = [](std::vector<std::string> rst) {
+            std::stringstream ss;
+            ss << "[ ";
+            for (auto &it : rst) {
+                ss << it << " ";
+            }
+            ss << "]";
+            TIGER_LOG_D(tiger::TEST_LOG) << ss.str();
+        };
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SADD("set", 3, "python", "java", "C++");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SCARD("set");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SADD("set", 1, "python");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SCARD("set");
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SADD("set2", 4, "python", "java", "C++", "golang");
+        cout_func(conns_pool->SMEMBERS<std::string>("set2"));
+        cout_func(conns_pool->SMEMBERS<std::string>("set3"));
+
+        cout_func(conns_pool->SDIFF<std::string>(2, "set2", "set"));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SDIFFSTORE("set3", 2, "set2", "set");
+        cout_func(conns_pool->SMEMBERS<std::string>("set3"));
+
+        cout_func(conns_pool->SINTER<std::string>(2, "set2", "set"));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SINTERSTORE("set4", 2, "set2", "set");
+        cout_func(conns_pool->SMEMBERS<std::string>("set4"));
+
+        cout_func(conns_pool->SUNION<std::string>(2, "set2", "set"));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SUNIONSTORE("set5", 2, "set2", "set");
+        cout_func(conns_pool->SMEMBERS<std::string>("set5"));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SISMEMBER("set5", "java");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SISMEMBER("set5", "Java");
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SADD("smove", 1, "move");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SMOVE("set", "smove", "C++");
+        cout_func(conns_pool->SMEMBERS<std::string>("set"));
+        cout_func(conns_pool->SMEMBERS<std::string>("smove"));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SADD("spop", 4, "1", "2", "3", "4");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SPOP<int64_t>("spop");
+        cout_func(conns_pool->SRANDMEMBER<std::string>("spop", 2));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SCARD("spop");
+        
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SADD("rem", 4, "1", "2", "3", "4");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SREM("rem", 2, "1", "3");
+        cout_func(conns_pool->SMEMBERS<std::string>("rem"));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SREM("rem", 1, "5");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SREM("rem2", 2, "1", "3");
+
+
+        auto all_keys = conns_pool->KEYS("*");
+        for (auto &it : all_keys) {
+            conns_pool->DEL(it);
+        }
+        iom->stop();
+    });
+    iom->start();
+}
+
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
     // test_key();
     // test_string();
     // test_hash();
-    test_list();
+    // test_list();
+    test_set();
     return 0;
 }

@@ -121,26 +121,26 @@ class RedisConnectionPool {
     /********************************************************** String **********************************************************/
 
     /********************************************************** Hash **********************************************************/
-    size_t HDEL(const std::string &key, size_t n, ...);
-    int HSET(const std::string &key, const std::string &field, const std::string &val);
-    bool HMSET(const std::string &key, size_t n, ...);
-    int HSETNX(const std::string &key, const std::string &field, const std::string &val);
-    int HINCRBY(const std::string &key, const std::string &field, int incr_by_number);
-    double HINCRBYFLOAT(const std::string &key, const std::string &field, double incr_by_number);
-    bool HEXISTS(const std::string &key, const std::string &field);
-    std::vector<std::string> HKEYS(const std::string &key);
-    size_t HLEN(const std::string &key);
-    std::vector<std::string> HVALS(const std::string &key);
-    std::vector<std::string> HGETALL(const std::string &key);
+    size_t HDEL(const std::string &hash, size_t n, ...);
+    int HSET(const std::string &hash, const std::string &field, const std::string &val);
+    bool HMSET(const std::string &hash, size_t n, ...);
+    int HSETNX(const std::string &hash, const std::string &field, const std::string &val);
+    int HINCRBY(const std::string &hash, const std::string &field, int incr_by_number);
+    double HINCRBYFLOAT(const std::string &hash, const std::string &field, double incr_by_number);
+    bool HEXISTS(const std::string &hash, const std::string &field);
+    std::vector<std::string> HKEYS(const std::string &hash);
+    size_t HLEN(const std::string &hash);
+    std::vector<std::string> HVALS(const std::string &hash);
+    std::vector<std::string> HGETALL(const std::string &hash);
     template <typename T>
-    T HGET(const std::string &key, const std::string &field) {
-        std::string cmd = fmt::format("*3\r\n$4\r\nHGET\r\n${}\r\n{}\r\n${}\r\n{}\r\n", key.size(), key, field.size(), field);
+    T HGET(const std::string &hash, const std::string &field) {
+        std::string cmd = fmt::format("*3\r\n$4\r\nHGET\r\n${}\r\n{}\r\n${}\r\n{}\r\n", hash.size(), hash, field.size(), field);
         auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
         return rst->get_data();
     }
     template <typename T>
-    std::vector<T> HMGET(const std::string &key, size_t n, ...) {
-        std::string cmd = fmt::format("*{}\r\n$5\r\nHMGET\r\n${}\r\n{}\r\n", n + 2, key.size(), key);
+    std::vector<T> HMGET(const std::string &hash, size_t n, ...) {
+        std::string cmd = fmt::format("*{}\r\n$5\r\nHMGET\r\n${}\r\n{}\r\n", n + 2, hash.size(), hash);
         va_list li;
         va_start(li, n);
         char *field = nullptr;
@@ -205,6 +205,77 @@ class RedisConnectionPool {
     bool LTRIM(const std::string &list, int64_t start, int64_t end);
     size_t LLEN(const std::string &list);
     /********************************************************** List **********************************************************/
+
+    /********************************************************** Set **********************************************************/
+    size_t SADD(const std::string &set, size_t n, ...);
+    size_t SCARD(const std::string &set);
+    template <typename T>
+    std::vector<T> SDIFF(size_t n, ...) {
+        std::string cmd = fmt::format("*{}\r\n$5\r\nSDIFF\r\n", n + 1);
+        va_list li;
+        va_start(li, n);
+        char *field = nullptr;
+        for (size_t i = 0; i < n; ++i) {
+            field = va_arg(li, char *);
+            cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+        }
+        va_end(li);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
+        return rst->get_data();
+    }
+    size_t SDIFFSTORE(const std::string &set, size_t n, ...);
+    template <typename T>
+    std::vector<T> SINTER(size_t n, ...) {
+        std::string cmd = fmt::format("*{}\r\n$6\r\nSINTER\r\n", n + 1);
+        va_list li;
+        va_start(li, n);
+        char *field = nullptr;
+        for (size_t i = 0; i < n; ++i) {
+            field = va_arg(li, char *);
+            cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+        }
+        va_end(li);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
+        return rst->get_data();
+    }
+    size_t SINTERSTORE(const std::string &set, size_t n, ...);
+    template <typename T>
+    std::vector<T> SUNION(size_t n, ...) {
+        std::string cmd = fmt::format("*{}\r\n$6\r\nSUNION\r\n", n + 1);
+        va_list li;
+        va_start(li, n);
+        char *field = nullptr;
+        for (size_t i = 0; i < n; ++i) {
+            field = va_arg(li, char *);
+            cmd += fmt::format("${}\r\n{}\r\n", strlen(field), field);
+        }
+        va_end(li);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
+        return rst->get_data();
+    }
+    size_t SUNIONSTORE(const std::string &set, size_t n, ...);
+    template <typename T>
+    std::vector<T> SMEMBERS(const std::string &set) {
+        std::string cmd = fmt::format("*2\r\n$8\r\nSMEMBERS\r\n${}\r\n{}\r\n", set.size(), set);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
+        return rst->get_data();
+    }
+    bool SISMEMBER(const std::string &set, const std::string &member);
+    bool SMOVE(const std::string &set, const std::string &other, const std::string &member);
+    template <typename T>
+    T SPOP(const std::string &set) {
+        std::string cmd = fmt::format("*2\r\n$4\r\nSPOP\r\n${}\r\n{}\r\n", set.size(), set);
+        auto rst = get_connection()->exec_cmd<RedisResultVal<T>>(cmd);
+        return rst->get_data();
+    }
+    template <typename T>
+    std::vector<T> SRANDMEMBER(const std::string &set, int64_t count) {
+        std::string cmd = fmt::format("*3\r\n$11\r\nSRANDMEMBER\r\n${}\r\n{}\r\n${}\r\n{}\r\n", set.size(), set, std::to_string(count).size(), count);
+        auto rst = get_connection()->exec_cmd<RedisResultVector<T>>(cmd);
+        return rst->get_data();
+    }
+    size_t SREM(const std::string &set, size_t n, ...);
+    /********************************************************** Set **********************************************************/
 };
 
 }  // namespace redis
