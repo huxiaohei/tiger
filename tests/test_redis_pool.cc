@@ -8,7 +8,7 @@
 #include "../src/db/redis/redis_connection_pool.h"
 
 void test_connection() {
-     auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 2);
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 2);
     auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
     iom->schedule([conns_pool, iom]() {
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->PING();
@@ -323,14 +323,35 @@ void test_set() {
     iom->start();
 }
 
+void test_zset() {
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 2);
+    auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
+    iom->schedule([conns_pool, iom]() {
+        
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset", 3, 100, "python", 90, "java", 80, "C++");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("not exist zset");
+        
+
+
+        auto all_keys = conns_pool->KEYS("*");
+        for (auto &it : all_keys) {
+            conns_pool->DEL(it);
+        }
+        iom->stop();
+    });
+    iom->start();
+}
+
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
-    test_connection();
+    // test_connection();
     // test_key();
     // test_string();
     // test_hash();
     // test_list();
     // test_set();
+    test_zset();
     return 0;
 }
