@@ -7,11 +7,21 @@
 
 #include "../src/db/redis/redis_connection_pool.h"
 
+void test_connection() {
+     auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 2);
+    auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
+    iom->schedule([conns_pool, iom]() {
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->PING();
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ECHO("Hello Redis");
+        iom->stop();
+    });
+    iom->start();
+}
+
 void test_key() {
     auto iom = std::make_shared<tiger::IOManager>("RedisTestKey", true, 2);
     auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
     iom->schedule([conns_pool, iom]() {
-        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->PING();
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SET("hello", "I'm tiger");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->TYPE("hello");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->TYPE("non exist");
@@ -297,13 +307,12 @@ void test_set() {
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SPOP<int64_t>("spop");
         cout_func(conns_pool->SRANDMEMBER<std::string>("spop", 2));
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SCARD("spop");
-        
+
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SADD("rem", 4, "1", "2", "3", "4");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SREM("rem", 2, "1", "3");
         cout_func(conns_pool->SMEMBERS<std::string>("rem"));
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SREM("rem", 1, "5");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->SREM("rem2", 2, "1", "3");
-
 
         auto all_keys = conns_pool->KEYS("*");
         for (auto &it : all_keys) {
@@ -317,10 +326,11 @@ void test_set() {
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
+    test_connection();
     // test_key();
     // test_string();
     // test_hash();
     // test_list();
-    test_set();
+    // test_set();
     return 0;
 }

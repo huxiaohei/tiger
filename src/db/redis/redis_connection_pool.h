@@ -43,7 +43,11 @@ class RedisConnectionPool {
     static void ReleaseConnPtr(RedisConnection *ptr, RedisConnectionPool *pool);
 
    public:
+    /********************************************************** Connection **********************************************************/
     bool PING();
+    std::string ECHO(const std::string &msg);
+    /********************************************************** Connection **********************************************************/
+
     /********************************************************** Key **********************************************************/
     bool DEL(const std::string &key);
     std::string TYPE(const std::string &key);

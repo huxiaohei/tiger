@@ -82,10 +82,18 @@ RedisConnection::ptr RedisConnectionPool::get_connection() {
                                                 this));
 }
 
+/********************************************************** Connection **********************************************************/
 bool RedisConnectionPool::PING() {
     auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>("PING");
     return rst->get_data() == "PONG";
 }
+
+std::string RedisConnectionPool::ECHO(const std::string &msg) {
+    auto cmd = fmt::format("*2\r\n$4\r\nECHO\r\n${}\r\n{}\r\n", msg.size(), msg);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data();
+}
+/********************************************************** Connection **********************************************************/
 
 /********************************************************** Key **********************************************************/
 bool RedisConnectionPool::DEL(const std::string &key) {
