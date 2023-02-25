@@ -636,6 +636,179 @@ size_t RedisConnectionPool::SREM(const std::string &set, size_t n, ...) {
 }
 /********************************************************** Set **********************************************************/
 
+/********************************************************** ZSet **********************************************************/
+size_t RedisConnectionPool::ZADD(const std::string &zset, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$4\r\nZADD\r\n${}\r\n{}\r\n", n * 2 + 2, zset.size(), zset);
+    va_list li;
+    va_start(li, n);
+    int64_t score = 0;
+    char *member = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        score = va_arg(li, int64_t);
+        member = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n${}\r\n{}\r\n", std::to_string(score).size(), score, strlen(member), member);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZCARD(const std::string &zset) {
+    std::string cmd = fmt::format("*2\r\n$5\r\nZCARD\r\n${}\r\n{}\r\n", zset.size(), zset);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZCOUNT(const std::string &zset, int64_t min, int64_t max) {
+    std::string cmd = fmt::format("*4\r\n$6\r\nZCOUNT\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, std::to_string(min).size(), min, std::to_string(max).size(), max);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+int64_t RedisConnectionPool::ZINCRBY(const std::string &zset, int64_t score, const std::string &member) {
+    std::string cmd = fmt::format("*4\r\n$7\r\nZINCRBY\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, std::to_string(score).size(), score, member.size(), member);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int64_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZINTERSTORE(const std::string &zset, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$11\r\nZINTERSTORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n", n + 3, zset.size(), zset, std::to_string(n).size(), n);
+    va_list li;
+    va_start(li, n);
+    char *other_set = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        other_set = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(other_set), other_set);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZLEXCOUNT(const std::string &zset, const std::string &left, const std::string &right) {
+    std::string cmd = fmt::format("*4\r\n$9\r\nZLEXCOUNT\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, left.size(), left, right.size(), right);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int64_t>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZRANGE(const std::string &zset, int64_t start, int64_t stop, bool with_scores) {
+    std::string cmd = fmt::format("*{}\r\n$6\r\nZRANGE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", with_scores ? 5 : 4, zset.size(), zset, std::to_string(start).size(), start, std::to_string(stop).size(), stop);
+    if (with_scores) {
+        cmd += "$10\r\nWITHSCORES\r\n";
+    }
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZRANGEBYLEX(const std::string &zset, const std::string &min, const std::string &max) {
+    std::string cmd = fmt::format("*4\r\n$11\r\nZRANGEBYLEX\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, min.size(), min, max.size(), max);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZRANGEBYLEX(const std::string &zset, const std::string &min, const std::string &max, size_t offset, size_t count) {
+    std::string cmd = fmt::format("*7\r\n$11\r\nZRANGEBYLEX\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n$5\r\nlimit\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, min.size(), min, max.size(), max, std::to_string(offset).size(), offset, std::to_string(count).size(), count);
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZRANGEBYSCORE(const std::string &zset, int64_t min, int64_t max, bool with_score) {
+    std::string cmd = fmt::format("*{}\r\n$13\r\nZRANGEBYSCORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", with_score ? 5 : 4, zset.size(), zset, std::to_string(min).size(), min, std::to_string(max).size(), max);
+    if (with_score) {
+        cmd += "$10\r\nWITHSCORES\r\n";
+    }
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZRANGEBYSCORE(const std::string &zset, int64_t min, int64_t max, size_t offset, size_t count, bool with_score) {
+    std::string cmd = fmt::format("*{}\r\n$13\r\nZRANGEBYSCORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n$5\r\nlimit\r\n${}\r\n{}\r\n${}\r\n{}\r\n", with_score ? 8 : 7, zset.size(), zset, std::to_string(min).size(), min, std::to_string(max).size(), max, std::to_string(offset).size(), offset, std::to_string(count).size(), count);
+    if (with_score) {
+        cmd += "$10\r\nWITHSCORES\r\n";
+    }
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZREVRANGEBYSCORE(const std::string &zset, int64_t max, int64_t min, bool with_score) {
+    std::string cmd = fmt::format("*{}\r\n$16\r\nZREVRANGEBYSCORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", with_score ? 5 : 4, zset.size(), zset, std::to_string(max).size(), max, std::to_string(min).size(), min);
+    if (with_score) {
+        cmd += "$10\r\nWITHSCORES\r\n";
+    }
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZREVRANGEBYSCORE(const std::string &zset, int64_t max, int64_t min, size_t offset, size_t count, bool with_score) {
+    std::string cmd = fmt::format("*{}\r\n$16\r\nZREVRANGEBYSCORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n$5\r\nlimit\r\n${}\r\n{}\r\n${}\r\n{}\r\n", with_score ? 8 : 7, zset.size(), zset, std::to_string(max).size(), max, std::to_string(min).size(), min, std::to_string(offset).size(), offset, std::to_string(count).size(), count);
+    if (with_score) {
+        cmd += "$10\r\nWITHSCORES\r\n";
+    }
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZRANK(const std::string &zset, const std::string &member) {
+    std::string cmd = fmt::format("*3\r\n$5\r\nZRANK\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, member.size(), member);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZREM(const std::string &zset, size_t n, ...) {
+    std::string cmd = fmt::format("*{}\r\n$4\r\nZREM\r\n${}\r\n{}\r\n", n + 2, zset.size(), zset);
+    va_list li;
+    va_start(li, n);
+    char *member = nullptr;
+    for (size_t i = 0; i < n; ++i) {
+        member = va_arg(li, char *);
+        cmd += fmt::format("${}\r\n{}\r\n", strlen(member), member);
+    }
+    va_end(li);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZREMRANGEBYLEX(const std::string &zset, const std::string &min, const std::string &max) {
+    std::string cmd = fmt::format("*4\r\n$14\r\nZREMRANGEBYLEX\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, min.size(), min, max.size(), max);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZREMRANGEBYRANK(const std::string &zset, int64_t start, int64_t stop) {
+    std::string cmd = fmt::format("*4\r\n$15\r\nZREMRANGEBYRANK\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, std::to_string(start).size(), start, std::to_string(stop).size(), stop);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+size_t RedisConnectionPool::ZREMRANGEBYSCORE(const std::string &zset, int64_t min, int64_t max) {
+    std::string cmd = fmt::format("*4\r\n$16\r\nZREMRANGEBYSCORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, std::to_string(min).size(), min, std::to_string(max).size(), max);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<size_t>>(cmd);
+    return rst->get_data();
+}
+
+std::vector<std::string> RedisConnectionPool::ZREVRANGE(const std::string &zset, int64_t start, int64_t stop, bool with_scores) {
+    std::string cmd = fmt::format("*{}\r\n$9\r\nZREVRANGE\r\n${}\r\n{}\r\n${}\r\n{}\r\n${}\r\n{}\r\n", with_scores ? 5 : 4, zset.size(), zset, std::to_string(start).size(), start, std::to_string(stop).size(), stop);
+    if (with_scores) {
+        cmd += "$10\r\nWITHSCORES\r\n";
+    }
+    auto rst = get_connection()->exec_cmd<RedisResultVector<std::string>>(cmd);
+    return rst->get_data();
+}
+
+int64_t RedisConnectionPool::ZREVRANK(const std::string &zset, const std::string &member) {
+    std::string cmd = fmt::format("*3\r\n$8\r\nZREVRANK\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, member.size(), member);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    if (rst->get_data().empty()) return -1;
+    return std::atol(rst->get_data().c_str());
+}
+
+int64_t RedisConnectionPool::ZSCORE(const std::string &zset, const std::string &member) {
+    std::string cmd = fmt::format("*3\r\n$6\r\nZSCORE\r\n${}\r\n{}\r\n${}\r\n{}\r\n", zset.size(), zset, member.size(), member);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<int64_t>>(cmd);
+    return rst->get_data();
+}
+/********************************************************** ZSet **********************************************************/
+
 }  // namespace redis
 
 }  // namespace tiger

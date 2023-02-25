@@ -78,6 +78,16 @@ class RedisValTrans<std::string> {
     }
 };
 
+template <typename T>
+class RedisValTrans<std::vector<T>> {
+   public:
+    std::vector<T> operator()(const char *s, int len) {
+        std::cout << std::string(s, len) << std::endl;
+        std::vector<T> rst;
+        return rst;
+    }
+};
+
 class RedisResult {
    private:
     RedisStatus m_status;
@@ -188,7 +198,7 @@ class RedisResultVal : public RedisResult {
 template <typename T>
 class RedisResultVector : public RedisResult {
    private:
-    int m_parse_len;
+    int64_t m_parse_len;
     std::vector<T> m_data;
 
    public:

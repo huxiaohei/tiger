@@ -327,12 +327,108 @@ void test_zset() {
     auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 2);
     auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
     iom->schedule([conns_pool, iom]() {
-        
-        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset", 3, 100, "python", 90, "java", 80, "C++");
+        auto cout_func = [](std::vector<std::string> rst) {
+            std::stringstream ss;
+            ss << "[ ";
+            for (auto &it : rst) {
+                ss << it << " ";
+            }
+            ss << "]";
+            TIGER_LOG_D(tiger::TEST_LOG) << ss.str();
+        };
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset", 3, 60, "python", 70, "java", 80, "C++");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("not exist zset");
-        
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCOUNT("zset", 70, 90);
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZINCRBY("zset", 20, "python");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCOUNT("zset", 70, 90);
 
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset1", 3, 60, "python", 70, "golang", 80, "C++");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZINTERSTORE("zset2", 2, "zset", "zset1");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset2");
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset2", 3, 30, "js", 75, "ruby", 90, "C");
+        cout_func(conns_pool->ZRANGE("zset2", 0, -1, true));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset3", 5, 1, "a", 1, "b", 1, "c", 1, "d", 1, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZLEXCOUNT("zset3", "[b", "[d");
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "-", "+"));
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "[b", "[d"));
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "[b", "(d"));
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "(b", "(d"));
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "(d", "(b"));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset3", 5, 1, "f", 1, "g", 1, "h", 1, "i", 1, "j");
+        cout_func(conns_pool->ZRANGE("zset3", 0, -1, true));
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "[c", "[h"));
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "[a", "[g", 2, 3));
+        cout_func(conns_pool->ZRANGEBYLEX("zset3", "[a", "[g", 2, 10));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 1, "a", 2, "b", 3, "c", 4, "d", 5, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 6, "f", 7, "g", 8, "h", 9, "i", 10, "j");
+        cout_func(conns_pool->ZRANGEBYSCORE("zset4", 3, 7, true));
+        cout_func(conns_pool->ZRANGEBYSCORE("zset4", 3, 7));
+        cout_func(conns_pool->ZRANGEBYSCORE("zset4", 3, 7, 2, 2, true));
+        cout_func(conns_pool->ZRANGEBYSCORE("zset4", 3, 7, 2, 2));
+        cout_func(conns_pool->ZREVRANGEBYSCORE("zset4", 7, 3, true));
+        cout_func(conns_pool->ZREVRANGEBYSCORE("zset4", 7, 3));
+        cout_func(conns_pool->ZREVRANGEBYSCORE("zset4", 7, 3, 2, 2, true));
+        cout_func(conns_pool->ZREVRANGEBYSCORE("zset4", 7, 3, 2, 2));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZRANK("zset4", "a");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZRANK("zset4", "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZRANK("zset4", "j");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZRANK("zset4", "not exist");
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREM("zset4", 3, "a", "b", "c");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset4");
+
+        cout_func(conns_pool->ZRANGE("zset3", 0, -1, true));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREMRANGEBYLEX("zset3", "-", "+");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset3");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset3", 5, 1, "a", 1, "b", 1, "c", 1, "d", 1, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset3", 5, 1, "f", 1, "g", 1, "h", 1, "i", 1, "j");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREMRANGEBYLEX("zset3", "[c", "[h");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset3");
+        cout_func(conns_pool->ZRANGE("zset3", 0, -1, true));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 1, "a", 2, "b", 3, "c", 4, "d", 5, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 6, "f", 7, "g", 8, "h", 9, "i", 10, "j");
+        cout_func(conns_pool->ZRANGE("zset4", 0, -1, true));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREMRANGEBYRANK("zset4", 0, -1);
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset4");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 1, "a", 2, "b", 3, "c", 4, "d", 5, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 6, "f", 7, "g", 8, "h", 9, "i", 10, "j");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREMRANGEBYRANK("zset4", 3, 9);
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset4");
+        cout_func(conns_pool->ZRANGE("zset4", 0, -1, true));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 1, "a", 2, "b", 3, "c", 4, "d", 5, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 6, "f", 7, "g", 8, "h", 9, "i", 10, "j");
+        cout_func(conns_pool->ZRANGE("zset4", 0, -1, true));
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREMRANGEBYSCORE("zset4", 0, 10);
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset4");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 1, "a", 2, "b", 3, "c", 4, "d", 5, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 6, "f", 7, "g", 8, "h", 9, "i", 10, "j");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREMRANGEBYSCORE("zset4", 3, 9);
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZCARD("zset4");
+        cout_func(conns_pool->ZRANGE("zset4", 0, -1, true));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 1, "a", 2, "b", 3, "c", 4, "d", 5, "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZADD("zset4", 5, 6, "f", 7, "g", 8, "h", 9, "i", 10, "j");
+        cout_func(conns_pool->ZRANGE("zset4", 0, -1));
+        cout_func(conns_pool->ZREVRANGE("zset4", 0, -1));
+        cout_func(conns_pool->ZREVRANGE("zset4", 0, -1, true));
+        cout_func(conns_pool->ZRANGE("zset4", 3, 6, true));
+        cout_func(conns_pool->ZREVRANGE("zset4", 3, 6, true));
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREVRANK("zset4", "a");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREVRANK("zset4", "c");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZREVRANK("zset4", "j");
+
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZSCORE("zset4", "j");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZSCORE("zset4", "a");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZSCORE("zset4", "c");
 
         auto all_keys = conns_pool->KEYS("*");
         for (auto &it : all_keys) {
