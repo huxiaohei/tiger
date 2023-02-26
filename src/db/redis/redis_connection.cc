@@ -79,6 +79,7 @@ bool RedisConnection::ping(bool force) {
     if (force || (now - m_last_rtime > g_redis_ping->val())) {
         auto rst = exec_cmd<RedisResultVal<std::string>>(TIGER_REDIS_CMD_PING, 0, false);
         if (TIGER_UNLIKELY(rst->get_data() != "PONG")) {
+            std::cout << "======" << rst->get_data() << std::endl;
             m_status = RedisStatus::CONNECT_FAIL;
             return false;
         }

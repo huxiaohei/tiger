@@ -303,6 +303,12 @@ class RedisConnectionPool {
     std::vector<std::string> ZREVRANGE(const std::string &zset, int64_t start, int64_t stop, bool with_scores = false);
     int64_t ZREVRANK(const std::string &zset, const std::string &member);
     int64_t ZSCORE(const std::string &zset, const std::string &member);
+    // HSCAN key cursor [MATCH pattern] [COUNT count]
+    std::pair<int64_t, std::vector<std::string>> ZSCAN(const std::string &zset, int64_t cursor, const std::string &pattern = "*", int64_t count = 10) {
+        std::string cmd = fmt::format("*7\r\n$5\r\nZSCAN\r\n${}\r\n{}\r\n${}\r\n{}\r\n$5\r\nMATCH\r\n${}\r\n{}\r\n$5\r\nCOUNT\r\n${}\r\n{}\r\n", zset.size(), zset, std::to_string(cursor).size(), cursor, pattern.size(), pattern, std::to_string(count).size(), count);
+        auto rst = get_connection()->exec_cmd<RedisResultScan<std::string>>(cmd);
+        return rst->get_data();
+    }
     /********************************************************** ZSet **********************************************************/
 };
 

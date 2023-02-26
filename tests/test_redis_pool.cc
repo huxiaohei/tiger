@@ -430,6 +430,8 @@ void test_zset() {
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZSCORE("zset4", "a");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZSCORE("zset4", "c");
 
+        cout_func(conns_pool->ZSCAN("zset4", 0).second);
+
         auto all_keys = conns_pool->KEYS("*");
         for (auto &it : all_keys) {
             conns_pool->DEL(it);

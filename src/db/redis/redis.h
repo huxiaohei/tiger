@@ -54,37 +54,11 @@ class RedisValTrans<bool> {
 };
 
 template <>
-class RedisValTrans<int> {
-   public:
-    int operator()(const char *s, int len) {
-        return std::atoi(std::string(s, len).c_str());
-    }
-};
-
-template <>
-class RedisValTrans<long int> {
-   public:
-    long int operator()(const char *s, int len) {
-        return std::atol(std::string(s, len).c_str());
-    }
-};
-
-template <>
 class RedisValTrans<std::string> {
    public:
     std::string operator()(const char *s, int len) {
         if (len == 0) return "";
         return std::string(s, len);
-    }
-};
-
-template <typename T>
-class RedisValTrans<std::vector<T>> {
-   public:
-    std::vector<T> operator()(const char *s, int len) {
-        std::cout << std::string(s, len) << std::endl;
-        std::vector<T> rst;
-        return rst;
     }
 };
 
@@ -95,6 +69,90 @@ class RedisResult {
 
    protected:
     std::string m_err_desc;
+
+   protected:
+    void parse_error(const char *s, int64_t len) {
+        if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+            m_err_desc = std::string(s, 1, len - 3);
+            set_parse_finished(true);
+            set_status(RedisStatus::REPLY_ERROR);
+        }
+    }
+
+    template <typename T>
+    void parse_simple_string(const char *s, int64_t len, T &data) {
+        if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+            data = RedisValTrans<T>()(s + 1, len - 3);
+            set_parse_finished(true);
+            set_status(RedisStatus::OK);
+        }
+    }
+
+    template <typename T>
+    void parse_digit(const char *s, int64_t len, T &data) {
+        if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+            data = RedisValTrans<T>()(s + 1, len - 3);
+            set_parse_finished(true);
+            set_status(RedisStatus::OK);
+        }
+    }
+
+    template <typename T>
+    void parse_string(const char *s, int64_t len, T &data) {
+        int digit = std::atoi(s + 1);
+        if (digit == -1 && std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+            m_err_desc = "nil";
+            set_parse_finished(true);
+            set_status(RedisStatus::NIL_ERROR);
+        } else {
+            if (len - digit - 2 == 1 + 1 + (int64_t)floor(log10(digit)) + 2) {
+                data = RedisValTrans<T>()(s + (len - digit - 2), digit);
+                set_parse_finished(true);
+                set_status(RedisStatus::OK);
+            } else {
+                set_parse_finished(false);
+            }
+        }
+    }
+
+    template <typename T>
+    void parse_vector(const char *s, int64_t len, int64_t &has_parse, std::vector<T> &data) {
+        int64_t rst_size = std::atoi(s + 1);
+        if (rst_size <= 0) {
+            if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
+                has_parse = len;
+                set_parse_finished(true);
+                set_status(RedisStatus::OK);
+            }
+            return;
+        }
+        if (has_parse == 0) {
+            has_parse += (1 + 1 + (int64_t)floor(log10(rst_size)) + 2);
+        }
+        while (has_parse < len) {
+            int item_len = std::atoi(s + has_parse + 1);
+            if (item_len == -1) {
+                has_parse += (1 + 2 + 2);
+                if (has_parse > len) {
+                    has_parse -= (1 + 2 + 2);
+                    return;
+                }
+                data.push_back(RedisValTrans<T>()(s + has_parse, 0));
+            } else {
+                has_parse += (1 + 1 + (int64_t)floor(log10(item_len)) + 2);
+                if (has_parse + item_len + 2 > len) {
+                    has_parse -= (1 + 1 + (int64_t)floor(log10(item_len)) + 2);
+                    return;
+                }
+                data.push_back(RedisValTrans<T>()(s + has_parse, item_len));
+                has_parse += (item_len + 2);
+            }
+        }
+        if (rst_size == (int64_t)data.size()) {
+            set_parse_finished(true);
+            set_status(RedisStatus::OK);
+        }
+    }
 
    public:
     typedef std::shared_ptr<RedisResult> ptr;
@@ -115,7 +173,7 @@ class RedisResult {
     bool is_parse_error() { return m_status == RedisStatus::PARSE_ERROR; }
 
    public:
-    virtual void parse(const char *s, int len) = 0;
+    virtual void parse(const char *s, int64_t len) = 0;
 };
 
 template <typename T>
@@ -132,58 +190,24 @@ class RedisResultVal : public RedisResult {
    public:
     T &get_data() { return m_data; }
 
-    friend std::ostream &operator<<(std::ostream &os, const RedisResultVal<T>::ptr rst) {
-        if (rst->get_status() == RedisStatus::OK) {
-            os << "[" << rst->get_status() << " " << rst->m_data << "]";
-        } else {
-            os << "[" << rst->get_status() << " " << rst->m_err_desc << "]";
-        }
-        return os;
-    }
-
    public:
-    void parse(const char *s, int len) override {
+    void parse(const char *s, int64_t len) override {
         if (len < 2) return;
         switch (s[0]) {
             case '-': {
-                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_err_desc = std::string(s, 1, len - 3);
-                    set_parse_finished(true);
-                    set_status(RedisStatus::REPLY_ERROR);
-                }
+                parse_error(s, len);
                 break;
             }
             case '+': {
-                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_data = RedisValTrans<T>()(s + 1, len - 3);
-                    set_parse_finished(true);
-                    set_status(RedisStatus::OK);
-                }
+                parse_simple_string(s, len, m_data);
                 break;
             }
             case ':': {
-                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_data = RedisValTrans<T>()(s + 1, len - 3);
-                    set_parse_finished(true);
-                    set_status(RedisStatus::OK);
-                }
+                parse_digit(s, len, m_data);
                 break;
             }
             case '$': {
-                int digit = std::atoi(s + 1);
-                if (digit == -1 && std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_err_desc = "nil";
-                    set_parse_finished(true);
-                    set_status(RedisStatus::NIL_ERROR);
-                } else {
-                    if (len - digit - 2 == 1 + 1 + (int)floor(log10(digit)) + 2) {
-                        m_data = RedisValTrans<T>()(s + (len - digit - 2), digit);
-                        set_parse_finished(true);
-                        set_status(RedisStatus::OK);
-                    } else {
-                        set_parse_finished(false);
-                    }
-                }
+                parse_string(s, len, m_data);
                 break;
             }
             default:
@@ -198,99 +222,90 @@ class RedisResultVal : public RedisResult {
 template <typename T>
 class RedisResultVector : public RedisResult {
    private:
-    int64_t m_parse_len;
+    int64_t m_has_parse;
     std::vector<T> m_data;
 
    public:
     typedef std::shared_ptr<RedisResultVector<T>> ptr;
 
     RedisResultVector()
-        : RedisResult(), m_parse_len(0) {}
+        : RedisResult(), m_has_parse(0) {}
 
    public:
-    std::vector<T> &get_data() { return m_data; };
-
-    friend std::ostream &operator<<(std::ostream &os, const RedisResultVector<T>::ptr rst) {
-        os << "[ " << rst->get_status();
-        if (rst->get_status() == RedisStatus::OK) {
-            os << " [";
-            for (const auto &it : rst->m_data) {
-                os << it << ",";
-            }
-            os << "]";
-        } else {
-            os << rst->m_err_desc;
-        }
-        os << "]";
-        return os;
-    }
+    std::vector<T> &get_data() { return m_data; }
 
    public:
-    void parse(const char *s, int len) override {
+    void parse(const char *s, int64_t len) override {
         if (len < 2) return;
         switch (s[0]) {
             case '-': {
-                if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_data.clear();
-                    m_err_desc = std::string(s, 1, len - 3);
-                    set_parse_finished(true);
-                    set_status(RedisStatus::REPLY_ERROR);
-                }
-                break;
-            }
-            case '$': {
-                int digit = std::atoi(s + 1);
-                if (digit == -1 && std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                    m_err_desc = "nil";
-                    set_parse_finished(true);
-                    set_status(RedisStatus::NIL_ERROR);
-                } else {
-                    if (len - digit - 2 == 1 + 1 + (int)floor(log10(digit)) + 2) {
-                        m_data.push_back(RedisValTrans<T>()(s + (len - digit - 2), digit));
-                        set_parse_finished(true);
-                        set_status(RedisStatus::OK);
-                    } else {
-                        set_parse_finished(false);
-                    }
-                }
+                parse_error(s, len);
                 break;
             }
             case '*': {
-                int rst_size = std::atoi(s + 1);
-                if (rst_size <= 0) {
+                parse_vector(s, len, m_has_parse, m_data);
+                break;
+            }
+            default:
+                m_err_desc = std::string(s, len);
+                set_parse_finished(true);
+                set_status(RedisStatus::PARSE_ERROR);
+                break;
+        }
+    }
+};
+
+template <typename T>
+class RedisResultScan : public RedisResult {
+   private:
+    int64_t m_has_parse;
+    bool init_first;
+    size_t second_offset;
+    std::pair<int64_t, std::vector<T>> m_data;
+
+   public:
+    typedef std::shared_ptr<RedisResultScan<T>> ptr;
+
+    RedisResultScan()
+        : RedisResult(), m_has_parse(0), init_first(false), second_offset(0) {}
+
+   public:
+    std::pair<int64_t, std::vector<T>> &get_data() { return m_data; }
+
+   public:
+    void parse(const char *s, int64_t len) override {
+        if (len < 2) return;
+        switch (s[0]) {
+            case '-': {
+                parse_error(s, len);
+                break;
+            }
+            case '*': {
+                int64_t rst_size = std::atoi(s + 1);
+                if (rst_size != 2) {
                     if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
-                        m_parse_len = len;
                         set_parse_finished(true);
-                        set_status(RedisStatus::OK);
+                        set_status(RedisStatus::PARSE_ERROR);
                     }
                     break;
                 }
-                if (m_parse_len == 0) {
-                    m_parse_len += (1 + 1 + (int)floor(log10(rst_size)) + 2);
-                }
-                while (m_parse_len < len) {
-                    int item_len = std::atoi(s + m_parse_len + 1);
-                    if (item_len == -1) {
-                        m_parse_len += (1 + 2 + 2);
-                        if (m_parse_len > len) {
-                            m_parse_len -= (1 + 2 + 2);
-                            break;
-                        }
-                        m_data.push_back(RedisValTrans<T>()(s + m_parse_len, 0));
-                    } else {
-                        m_parse_len += (1 + 1 + (int)floor(log10(item_len)) + 2);
-                        if (m_parse_len + item_len + 2 > len) {
-                            m_parse_len -= (1 + 1 + (int)floor(log10(item_len)) + 2);
-                            break;
-                        }
-                        m_data.push_back(RedisValTrans<T>()(s + m_parse_len, item_len));
-                        m_parse_len += (item_len + 2);
+                if (!init_first) {
+                    int64_t first_start = 1 + 1 + (size_t)log10(rst_size) + 2;
+                    if (first_start >= len) break;
+                    int64_t digit = std::atol(s + first_start + 1);
+                    m_has_parse += first_start + 1 + (int64_t)floor(log10(digit)) + 2;
+                    if (m_has_parse + digit + 2 > len) {
+                        m_has_parse -= first_start + 1 + (int64_t)floor(log10(digit)) + 2;
+                        break;
                     }
+                    init_first = true;
+                    m_data.first = std::atol(s + m_has_parse);
+                    m_has_parse += digit + 2;
+                    second_offset = m_has_parse;
                 }
-                if (rst_size == (int)m_data.size() && m_parse_len == len) {
-                    set_parse_finished(true);
-                    set_status(RedisStatus::OK);
-                }
+                std::cout << "m_has_parse:" << std::string(s + second_offset, len - second_offset) << std::endl;
+                parse_vector<T>(s + second_offset, len - second_offset, m_has_parse, m_data.second);
+                std::cout << "m_has_parse:" << m_has_parse << " size:" << m_data.second.size() << std::endl;
                 break;
             }
             default:
