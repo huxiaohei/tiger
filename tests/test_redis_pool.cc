@@ -173,6 +173,15 @@ void test_hash() {
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->HLEN("hash");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->HLEN("not exist");
 
+        conns_pool->DEL("hash");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->HMSET("hash", 3, "1", "a", "2", "b", "3", "c", "4", "d", "5", "e");
+        TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->HMSET("hash", 3, "6", "a", "7", "b", "8", "c", "9", "d", "10", "e");
+        auto scan = conns_pool->HSCAN<std::string>("hash", 0);
+        TIGER_LOG_D(tiger::TEST_LOG) << scan.first;
+        for (auto &it : scan.second) {
+            TIGER_LOG_D(tiger::TEST_LOG) << it;
+        }
+
         auto all_keys = conns_pool->KEYS("*");
         for (auto &it : all_keys) {
             conns_pool->DEL(it);
@@ -430,7 +439,7 @@ void test_zset() {
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZSCORE("zset4", "a");
         TIGER_LOG_D(tiger::TEST_LOG) << conns_pool->ZSCORE("zset4", "c");
 
-        cout_func(conns_pool->ZSCAN("zset4", 0).second);
+        cout_func(conns_pool->ZSCAN<std::string>("zset4", 0).second);
 
         auto all_keys = conns_pool->KEYS("*");
         for (auto &it : all_keys) {

@@ -293,19 +293,20 @@ class RedisResultScan : public RedisResult {
                     int64_t first_start = 1 + 1 + (size_t)log10(rst_size) + 2;
                     if (first_start >= len) break;
                     int64_t digit = std::atol(s + first_start + 1);
-                    m_has_parse += first_start + 1 + (int64_t)floor(log10(digit)) + 2;
+                    m_has_parse += first_start + 1 + 1 + (int64_t)floor(log10(digit)) + 2;
                     if (m_has_parse + digit + 2 > len) {
-                        m_has_parse -= first_start + 1 + (int64_t)floor(log10(digit)) + 2;
+                        m_has_parse -= first_start + 1 + 1 + (int64_t)floor(log10(digit)) + 2;
                         break;
                     }
                     init_first = true;
                     m_data.first = std::atol(s + m_has_parse);
                     m_has_parse += digit + 2;
                     second_offset = m_has_parse;
+                    m_has_parse = 0;
                 }
-                std::cout << "m_has_parse:" << std::string(s + second_offset, len - second_offset) << std::endl;
-                parse_vector<T>(s + second_offset, len - second_offset, m_has_parse, m_data.second);
-                std::cout << "m_has_parse:" << m_has_parse << " size:" << m_data.second.size() << std::endl;
+                if (init_first) {
+                    parse_vector<T>(s + second_offset, len - second_offset, m_has_parse, m_data.second);
+                }
                 break;
             }
             default:
