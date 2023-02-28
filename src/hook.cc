@@ -115,6 +115,8 @@ static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
                     week_state, false);
             }
             if (iom->add_event(fd, status)) {
+                // 问题：多线程环境下，协程Yield之前事件被触发了怎么办？
+                // 解决：在调度器中先忽略RUNNING状态的协程，不要从任务池里面移除
                 tiger::Coroutine::Yield();
                 iom->cancel_timer(timer);
                 if (state->canceled) {

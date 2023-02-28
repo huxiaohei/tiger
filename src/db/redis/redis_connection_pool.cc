@@ -93,6 +93,12 @@ std::string RedisConnectionPool::ECHO(const std::string &msg) {
     auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
     return rst->get_data();
 }
+
+bool RedisConnectionPool::SELECT(int db) {
+    auto cmd = fmt::format("*2\r\n$6\r\nSELECT\r\n${}\r\n{}\r\n", std::to_string(db).size(), db);
+    auto rst = get_connection()->exec_cmd<RedisResultVal<std::string>>(cmd);
+    return rst->get_data() == "OK";
+}
 /********************************************************** Connection **********************************************************/
 
 /********************************************************** Key **********************************************************/

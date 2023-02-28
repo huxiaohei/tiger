@@ -333,7 +333,7 @@ void test_set() {
 }
 
 void test_zset() {
-    auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 2);
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestZSet", true, 10);
     auto conns_pool = tiger::redis::RedisConnectionPool::Create("127.0.0.1", 6401, "liuhu", 100, false);
     iom->schedule([conns_pool, iom]() {
         auto cout_func = [](std::vector<std::string> rst) {
@@ -450,15 +450,30 @@ void test_zset() {
     iom->start();
 }
 
+void test_pre() {
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 1);
+    auto conns_pool = tiger::redis::RedisConnectionPool::Create("10.1.1.203", 8004, "tyhall51", 100, false);
+    iom->schedule([conns_pool, iom]() {
+        conns_pool->SELECT(7);
+        auto all_keys = conns_pool->KEYS("*");
+        for (auto &it : all_keys) {
+            TIGER_LOG_D(tiger::TEST_LOG) << "[" << it << "  " << conns_pool->TYPE(it) << "]";
+        }
+        iom->stop();
+    });
+    iom->start();
+}
+
 int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
     // test_connection();
-    // test_key();
+    test_key();
     // test_string();
     // test_hash();
     // test_list();
     // test_set();
-    test_zset();
+    // test_zset();
+    // test_pre();
     return 0;
 }

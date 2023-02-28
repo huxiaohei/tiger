@@ -99,13 +99,13 @@ class RedisResult {
 
     template <typename T>
     void parse_string(const char *s, int64_t len, T &data) {
-        int digit = std::atoi(s + 1);
+        int64_t digit = std::atol(s + 1);
         if (digit == -1 && std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
             m_err_desc = "nil";
             set_parse_finished(true);
             set_status(RedisStatus::NIL_ERROR);
         } else {
-            if (len - digit - 2 == 1 + 1 + (int64_t)floor(log10(digit)) + 2) {
+            if (len - digit - 2 == 1 + (int64_t)std::to_string(digit).size() + 2) {
                 data = RedisValTrans<T>()(s + (len - digit - 2), digit);
                 set_parse_finished(true);
                 set_status(RedisStatus::OK);
@@ -117,7 +117,7 @@ class RedisResult {
 
     template <typename T>
     void parse_vector(const char *s, int64_t len, int64_t &has_parse, std::vector<T> &data) {
-        int64_t rst_size = std::atoi(s + 1);
+        int64_t rst_size = std::atol(s + 1);
         if (rst_size <= 0) {
             if (std::string(s, len - 2, 2) == TIGER_REDIS_CRLF) {
                 has_parse = len;
@@ -127,7 +127,7 @@ class RedisResult {
             return;
         }
         if (has_parse == 0) {
-            has_parse += (1 + 1 + (int64_t)floor(log10(rst_size)) + 2);
+            has_parse += (1 + std::to_string(rst_size).size() + 2);
         }
         while (has_parse < len) {
             int item_len = std::atoi(s + has_parse + 1);
@@ -139,9 +139,9 @@ class RedisResult {
                 }
                 data.push_back(RedisValTrans<T>()(s + has_parse, 0));
             } else {
-                has_parse += (1 + 1 + (int64_t)floor(log10(item_len)) + 2);
+                has_parse += (1 + std::to_string(item_len).size() + 2);
                 if (has_parse + item_len + 2 > len) {
-                    has_parse -= (1 + 1 + (int64_t)floor(log10(item_len)) + 2);
+                    has_parse -= (1 + std::to_string(item_len).size() + 2);
                     return;
                 }
                 data.push_back(RedisValTrans<T>()(s + has_parse, item_len));
@@ -243,7 +243,7 @@ class RedisResultVector : public RedisResult {
                 break;
             }
             case '*': {
-                parse_vector(s, len, m_has_parse, m_data);
+                parse_vector<T>(s, len, m_has_parse, m_data);
                 break;
             }
             default:
@@ -290,12 +290,12 @@ class RedisResultScan : public RedisResult {
                     break;
                 }
                 if (!init_first) {
-                    int64_t first_start = 1 + 1 + (size_t)log10(rst_size) + 2;
+                    int64_t first_start = 1 + std::to_string(rst_size).size() + 2;
                     if (first_start >= len) break;
                     int64_t digit = std::atol(s + first_start + 1);
-                    m_has_parse += first_start + 1 + 1 + (int64_t)floor(log10(digit)) + 2;
+                    m_has_parse += first_start + 1 + std::to_string(digit).size() + 2;
                     if (m_has_parse + digit + 2 > len) {
-                        m_has_parse -= first_start + 1 + 1 + (int64_t)floor(log10(digit)) + 2;
+                        m_has_parse -= first_start + 1 + std::to_string(digit).size() + 2;
                         break;
                     }
                     init_first = true;
