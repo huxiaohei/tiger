@@ -175,12 +175,12 @@ class DateTimeFormatItem : public LogFormatter::FormatItem {
         : LogFormatter::FormatItem(fmt) {}
     void format(const std::shared_ptr<Logger> logger, std::ostream &os,
                 LogLevel::Level level, LogEvent::ptr event) {
-        struct tm tm;
-        time_t time = event->time();
-        localtime_r(&time, &tm);
+        const time_t time = event->time() / 1000;
+        char ms[10];
+        sprintf(ms, ".%03ld", time % 1000);
         char buf[64];
-        strftime(buf, sizeof(buf), m_fmt.c_str(), &tm);
-        os << buf;
+        strftime(buf, sizeof(buf), m_fmt.c_str(), localtime(&time));
+        os << buf << ms;
     }
 };
 

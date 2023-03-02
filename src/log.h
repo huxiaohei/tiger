@@ -22,15 +22,15 @@
 #include "thread.h"
 #include "util.h"
 
-#define TIGER_LOG_LEVEL(logger, level)                                                                                                                                             \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                         \
-                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Second(), tiger::Thread::CurThreadName())) \
+#define TIGER_LOG_LEVEL(logger, level)                                                                                                                                                  \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                              \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Millisecond(), tiger::Thread::CurThreadName())) \
         .ss()
 
-#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                                                                               \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                         \
-                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Second(), tiger::Thread::CurThreadName())) \
-        .event()                                                                                                                                                                   \
+#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                                                                                    \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                              \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Millisecond(), tiger::Thread::CurThreadName())) \
+        .event()                                                                                                                                                                        \
         ->format(fmt, __VA_ARGS__);
 
 #define TIGER_LOG_DEBUG(logger) TIGER_LOG_LEVEL(logger, tiger::LogLevel::DEBUG)
