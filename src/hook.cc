@@ -116,7 +116,10 @@ static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
             }
             if (iom->add_event(fd, status)) {
                 // 问题：多线程环境下，协程Yield之前事件被触发了怎么办？
-                // 解决：在调度器中先忽略RUNNING状态的协程，不要从任务池里面移除
+                // 解决：
+                //  1.事件触发的时候必定会在此线程中被唤醒
+                //  2.在调度器中如果发现任务池中有指定线程任务，但不是本线程则发起tickle唤醒一个idle进程
+                //  3.在线程进入idle状态的时候，如果之前tickle过，则重置tickle状态
                 tiger::Coroutine::Yield();
                 iom->cancel_timer(timer);
                 if (state->canceled) {

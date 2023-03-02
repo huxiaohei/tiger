@@ -451,7 +451,7 @@ void test_zset() {
 }
 
 void test_pre() {
-    auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 1);
+    auto iom = std::make_shared<tiger::IOManager>("RedisTestSet", true, 3);
     auto conns_pool = tiger::redis::RedisConnectionPool::Create("10.1.1.203", 8004, "tyhall51", 100, false);
     iom->schedule([conns_pool, iom]() {
         conns_pool->SELECT(7);
@@ -468,12 +468,12 @@ int main() {
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("RedisTestMianThread");
     // test_connection();
-    test_key();
+    // test_key();
     // test_string();
     // test_hash();
     // test_list();
     // test_set();
     // test_zset();
-    // test_pre();
+    test_pre();
     return 0;
 }

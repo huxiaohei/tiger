@@ -75,6 +75,7 @@ void Scheduler::run() {
             while (t != m_tasks.end()) {
                 if (t->m_thread_id != 0 && t->m_thread_id != Thread::CurThreadId()) {
                     ++t;
+                    need_tickle = true;
                     continue;
                 }
                 task = *t;
@@ -107,6 +108,10 @@ void Scheduler::run() {
                 }
                 break;
             } else {
+                if (need_tickle) {
+                    need_tickle = false;
+                    continue;
+                }
                 idle_co->resume();
             }
         }
