@@ -9,30 +9,38 @@
 #include "../src/macro.h"
 #include "../src/socket.h"
 
-void run() {
+void run()
+{
     auto addr = tiger::Address::LookupAny("0.0.0.0:8085");
     auto socket = tiger::Socket::CreateUDPSocket();
-    if (socket->bind(addr)) {
+    if (socket->bind(addr))
+    {
         TIGER_LOG_D(tiger::TEST_LOG) << "[udp_server bind address success [" << addr << "]";
-    } else {
+    }
+    else
+    {
         TIGER_LOG_E(tiger::TEST_LOG) << "[udp_server bind address fail [" << addr << "]";
     }
-    while (true) {
+    while (true)
+    {
         char buffer[1024];
         auto from = std::make_shared<tiger::IPv4Address>();
         auto len = socket->recv_from(buffer, 1024, from);
-        if (len > 0) {
+        if (len > 0)
+        {
             buffer[len] = '\0';
             TIGER_LOG_D(tiger::TEST_LOG) << "[udp_server recv '" << buffer << "' from " << *from << "]";
             len = socket->send_to(buffer, len, from);
-            if (len < 0) {
+            if (len < 0)
+            {
                 TIGER_LOG_D(tiger::TEST_LOG) << "[upd_server send '" << buffer << "' to " << *from << "]";
             }
         }
     }
 }
 
-int main() {
+int main()
+{
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("UDPServer");
     TIGER_LOG_D(tiger::TEST_LOG) << "[udp_server test start]";

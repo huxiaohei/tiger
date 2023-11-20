@@ -12,61 +12,69 @@
 #include <semaphore.h>
 #include <stdint.h>
 
-namespace tiger {
+namespace tiger
+{
 
-class Semaphore {
-   private:
+class Semaphore
+{
+  private:
     sem_t m_semaphore;
 
-   public:
+  public:
     Semaphore(uint32_t count = 0);
     ~Semaphore();
 
     void wait();
     void post();
 
-   private:
+  private:
     Semaphore(const Semaphore &) = delete;
     Semaphore(const Semaphore &&) = delete;
     Semaphore &operator=(const Semaphore &) = delete;
 };
 
-template <typename T>
-class ScopedLockTmpl {
-   private:
+template <typename T> class ScopedLockTmpl
+{
+  private:
     T &m_mutex;
     bool m_locked;
 
-   public:
-    ScopedLockTmpl(T &mutex)
-        : m_mutex(mutex), m_locked(false) {
+  public:
+    ScopedLockTmpl(T &mutex) : m_mutex(mutex), m_locked(false)
+    {
         lock();
     }
 
-    ~ScopedLockTmpl() {
+    ~ScopedLockTmpl()
+    {
         unlock();
     }
 
-    void lock() {
-        if (!m_locked) {
+    void lock()
+    {
+        if (!m_locked)
+        {
             m_mutex.lock();
             m_locked = true;
         }
     }
 
-    void unlock() {
-        if (m_locked) {
+    void unlock()
+    {
+        if (m_locked)
+        {
             m_mutex.unlock();
             m_locked = false;
         }
     }
 };
 
-class SpinLock {
-   private:
+class SpinLock
+{
+  private:
     pthread_spinlock_t m_lock;
 
-   public:
+  public:
     typedef ScopedLockTmpl<SpinLock> Lock;
 
     SpinLock();
@@ -76,11 +84,12 @@ class SpinLock {
     void unlock();
 };
 
-class MutexLock {
-   private:
+class MutexLock
+{
+  private:
     pthread_mutex_t m_lock;
 
-   public:
+  public:
     typedef ScopedLockTmpl<MutexLock> Lock;
 
     MutexLock();
@@ -90,73 +99,84 @@ class MutexLock {
     void unlock();
 };
 
-template <typename T>
-class ReadScopedLockTmpl {
-   private:
+template <typename T> class ReadScopedLockTmpl
+{
+  private:
     T &m_rlock;
     bool m_locked;
 
-   public:
-    ReadScopedLockTmpl(T &rlock)
-        : m_rlock(rlock), m_locked(false) {
+  public:
+    ReadScopedLockTmpl(T &rlock) : m_rlock(rlock), m_locked(false)
+    {
         lock();
     }
 
-    ~ReadScopedLockTmpl() {
+    ~ReadScopedLockTmpl()
+    {
         unlock();
     }
 
-    void lock() {
-        if (!m_locked) {
+    void lock()
+    {
+        if (!m_locked)
+        {
             m_rlock.rdlock();
             m_locked = true;
         }
     }
 
-    void unlock() {
-        if (m_locked) {
+    void unlock()
+    {
+        if (m_locked)
+        {
             m_rlock.unlock();
             m_locked = false;
         }
     }
 };
 
-template <typename T>
-class WriteScopedLockTmpl {
-   private:
+template <typename T> class WriteScopedLockTmpl
+{
+  private:
     T &m_wrlock;
     bool m_locked;
 
-   public:
-    WriteScopedLockTmpl(T &wrlock)
-        : m_wrlock(wrlock), m_locked(false) {
+  public:
+    WriteScopedLockTmpl(T &wrlock) : m_wrlock(wrlock), m_locked(false)
+    {
         lock();
     }
 
-    ~WriteScopedLockTmpl() {
+    ~WriteScopedLockTmpl()
+    {
         unlock();
     }
 
-    void lock() {
-        if (!m_locked) {
+    void lock()
+    {
+        if (!m_locked)
+        {
             m_wrlock.wrlock();
             m_locked = true;
         }
     }
 
-    void unlock() {
-        if (m_locked) {
+    void unlock()
+    {
+        if (m_locked)
+        {
             m_wrlock.unlock();
             m_locked = false;
         }
     }
 };
 
-class ReadWriteLock {
-   private:
+class ReadWriteLock
+{
+  private:
     pthread_rwlock_t m_rwlock;
 
-   public:
+  public:
     typedef ReadScopedLockTmpl<ReadWriteLock> ReadLock;
     typedef WriteScopedLockTmpl<ReadWriteLock> WriteLock;
 
@@ -168,6 +188,6 @@ class ReadWriteLock {
     void unlock();
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

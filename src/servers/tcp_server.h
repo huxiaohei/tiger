@@ -11,13 +11,15 @@
 #include "../iomanager.h"
 #include "../socket.h"
 
-namespace tiger {
+namespace tiger
+{
 
-class TCPServer : public std::enable_shared_from_this<TCPServer> {
-   private:
+class TCPServer : public std::enable_shared_from_this<TCPServer>
+{
+  private:
     MutexLock m_lock;
 
-   protected:
+  protected:
     std::vector<Socket::ptr> m_sockets;
     IOManager::ptr m_io_worker;
     IOManager::ptr m_accept_worker;
@@ -26,40 +28,59 @@ class TCPServer : public std::enable_shared_from_this<TCPServer> {
     std::string m_name;
     bool m_is_stop;
 
-   protected:
+  protected:
     virtual void handle_client(Socket::ptr client);
     virtual void start_accept(Socket::ptr socket);
 
-   public:
+  public:
     typedef std::shared_ptr<TCPServer> ptr;
 
     TCPServer(IOManager::ptr io_worker = IOManager::GetThreadIOM(),
-              IOManager::ptr accept_worker = IOManager::GetThreadIOM(),
-              const std::string &name = "");
+              IOManager::ptr accept_worker = IOManager::GetThreadIOM(), const std::string &name = "");
     virtual ~TCPServer();
 
-   public:
+  public:
     virtual bool bind(Address::ptr addr, bool is_ssl = false);
-    virtual bool bind(const std::vector<Address::ptr> &addrs,
-                      std::vector<Address::ptr> &fails, bool is_ssl = false);
+    virtual bool bind(const std::vector<Address::ptr> &addrs, std::vector<Address::ptr> &fails, bool is_ssl = false);
 
     virtual bool start();
     virtual void stop();
 
-   public:
-    int64_t get_accept_timeout() const { return m_accept_timeout; }
-    int64_t get_recv_timeout() const { return m_recv_timeout; }
-    std::string get_name() const { return m_name; }
-    bool is_stop() const { return m_is_stop; }
+  public:
+    int64_t get_accept_timeout() const
+    {
+        return m_accept_timeout;
+    }
+    int64_t get_recv_timeout() const
+    {
+        return m_recv_timeout;
+    }
+    std::string get_name() const
+    {
+        return m_name;
+    }
+    bool is_stop() const
+    {
+        return m_is_stop;
+    }
 
-    void set_accept_timeout(int64_t timeout_ms) { m_accept_timeout = timeout_ms; }
-    void set_recv_timeout(int64_t timeout_ms) { m_recv_timeout = timeout_ms; }
-    void set_name(const std::string &name) { m_name = name; }
+    void set_accept_timeout(int64_t timeout_ms)
+    {
+        m_accept_timeout = timeout_ms;
+    }
+    void set_recv_timeout(int64_t timeout_ms)
+    {
+        m_recv_timeout = timeout_ms;
+    }
+    void set_name(const std::string &name)
+    {
+        m_name = name;
+    }
 
-   public:
+  public:
     bool load_certificates(const std::string &cert_file, const std::string &key_file);
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

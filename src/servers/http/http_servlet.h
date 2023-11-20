@@ -15,67 +15,77 @@
 #include "http.h"
 #include "http_session.h"
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
-class Servlet {
-   protected:
+class Servlet
+{
+  protected:
     std::string m_name;
 
-   public:
+  public:
     typedef std::shared_ptr<Servlet> ptr;
-    typedef std::function<int32_t(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session)> Callback;
+    typedef std::function<int32_t(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session)>
+        Callback;
 
     Servlet(const std::string &name = "");
     virtual ~Servlet(){};
 
-   public:
-    const std::string &get_name() { return m_name; }
+  public:
+    const std::string &get_name()
+    {
+        return m_name;
+    }
 
-   public:
+  public:
     virtual int32_t handle(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session) = 0;
 };
 
-class FunctionServlet : public Servlet {
-   private:
+class FunctionServlet : public Servlet
+{
+  private:
     Callback m_cb;
 
-   public:
+  public:
     typedef std::shared_ptr<FunctionServlet> ptr;
 
     FunctionServlet(Callback cb);
 
-   public:
+  public:
     int32_t handle(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session) override;
 };
 
-class NotFoundServlet : public Servlet {
-   public:
+class NotFoundServlet : public Servlet
+{
+  public:
     typedef std::shared_ptr<NotFoundServlet> ptr;
 
     NotFoundServlet();
 
-   public:
+  public:
     int32_t handle(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session) override;
 };
 
-class ServletDispatch : public Servlet {
-   private:
+class ServletDispatch : public Servlet
+{
+  private:
     ReadWriteLock m_lock;
     std::unordered_map<std::string, Servlet::ptr> m_datas;
     std::vector<std::pair<std::string, Servlet::ptr>> m_globs;
     Servlet::ptr m_default_servlet;
 
-   public:
+  public:
     typedef std::shared_ptr<ServletDispatch> ptr;
 
     ServletDispatch(const std::string &name = "");
 
-   public:
+  public:
     int32_t handle(HTTPRequest::ptr request, HTTPResponse::ptr response, HTTPSession::ptr session) override;
 
-   public:
+  public:
     void add_servlet(const std::string &path, Servlet::ptr slt);
     void add_servlet(const std::string &path, FunctionServlet::Callback cb);
     void add_glob_servlet(const std::string &path, Servlet::ptr slt);
@@ -92,7 +102,7 @@ class ServletDispatch : public Servlet {
     void set_default_servlet(Servlet::ptr defaultServlet);
 };
 
-}  // namespace http
-}  // namespace tiger
+} // namespace http
+} // namespace tiger
 
 #endif

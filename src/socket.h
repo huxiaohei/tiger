@@ -14,10 +14,12 @@
 
 #include "address.h"
 
-namespace tiger {
+namespace tiger
+{
 
-class Socket : public std::enable_shared_from_this<Socket> {
-   protected:
+class Socket : public std::enable_shared_from_this<Socket>
+{
+  protected:
     int m_sock;
     int m_family;
     int m_type;
@@ -26,14 +28,14 @@ class Socket : public std::enable_shared_from_this<Socket> {
     Address::ptr m_local_addr;
     Address::ptr m_remote_addr;
 
-   protected:
+  protected:
     virtual bool init(int sock);
     void init_sock();
     void new_sock();
     Address::ptr init_local_address();
     Address::ptr init_remote_address();
 
-   public:
+  public:
     typedef std::shared_ptr<Socket> ptr;
 
     Socket(int family, int type, int protocol = 0);
@@ -43,7 +45,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
     Socket(const Socket &&) = delete;
     Socket &operator=(const Socket &) = delete;
 
-   public:
+  public:
     static Socket::ptr CreateTCP(tiger::Address::ptr address);
     static Socket::ptr CreateUDP(tiger::Address::ptr address);
     static Socket::ptr CreateTCPSocket();
@@ -53,17 +55,35 @@ class Socket : public std::enable_shared_from_this<Socket> {
     static Socket::ptr CreateUnixTCPSocket();
     static Socket::ptr CreateUnixUDPSocket();
 
-   public:
-    int get_family() const { return m_family; }
-    int get_type() const { return m_type; }
-    int get_protocol() const { return m_protocol; }
-    bool is_connected() const { return m_is_connected; }
-    bool is_valid() const { return m_sock != -1; }
-    int get_socket() const { return m_sock; }
+  public:
+    int get_family() const
+    {
+        return m_family;
+    }
+    int get_type() const
+    {
+        return m_type;
+    }
+    int get_protocol() const
+    {
+        return m_protocol;
+    }
+    bool is_connected() const
+    {
+        return m_is_connected;
+    }
+    bool is_valid() const
+    {
+        return m_sock != -1;
+    }
+    int get_socket() const
+    {
+        return m_sock;
+    }
     virtual std::ostream &dump(std::ostream &os) const;
     virtual std::string to_string() const;
 
-   public:
+  public:
     int get_error();
     int64_t get_send_timeout();
     void set_send_timeout(int64_t timeout);
@@ -94,37 +114,38 @@ class Socket : public std::enable_shared_from_this<Socket> {
     virtual int recv_from(void *buffer, size_t len, Address::ptr from, int flags = 0);
     virtual int recv_from(iovec *buffers, size_t len, Address::ptr from, int flags = 0);
 
-   public:
+  public:
     bool cancel_read();
     bool cancel_write();
     bool cancel_accept();
     bool cancel_all();
 
-   public:
+  public:
     friend std::ostream &operator<<(std::ostream &os, const Socket::ptr socket);
     friend std::ostream &operator<<(std::ostream &os, const Socket &socket);
 };
 
-class SSLSocket : public Socket {
-   private:
+class SSLSocket : public Socket
+{
+  private:
     std::shared_ptr<SSL_CTX> m_ctx;
     std::shared_ptr<SSL> m_ssl;
 
-   protected:
+  protected:
     virtual bool init(int sock) override;
 
-   public:
+  public:
     typedef std::shared_ptr<SSLSocket> ptr;
 
     SSLSocket(int family, int type, int protocol = 0);
     virtual ~SSLSocket();
 
-   public:
+  public:
     static Socket::ptr CreateTCP(tiger::Address::ptr address);
     static Socket::ptr CreateTCPSocket();
     static Socket::ptr CreateTCPSocket6();
 
-   public:
+  public:
     virtual bool connect(const Address::ptr addr, uint64_t timeout_ms = -1) override;
 
     virtual bool bind(const Address::ptr addr) override;
@@ -144,14 +165,14 @@ class SSLSocket : public Socket {
     virtual int recv_from(void *buffer, size_t len, Address::ptr from, int flags = 0) override;
     virtual int recv_from(iovec *buffers, size_t len, Address::ptr from, int flags = 0) override;
 
-   public:
+  public:
     bool load_certificates(const std::string &cert_file, const std::string &key_file);
 
-   public:
+  public:
     friend std::ostream &operator<<(std::ostream &os, const SSLSocket::ptr socket);
     friend std::ostream &operator<<(std::ostream &os, const SSLSocket &socket);
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

@@ -9,16 +9,19 @@
 #include "../src/macro.h"
 #include "../src/socket.h"
 
-void test_socket_send(const std::string &host, tiger::IOManager::ptr iom) {
+void test_socket_send(const std::string &host, tiger::IOManager::ptr iom)
+{
     tiger::IPAddress::ptr addr = tiger::IPAddress::LookupAny(host);
     tiger::Socket::ptr socket = tiger::Socket::CreateTCPSocket();
-    if (!socket->connect(addr)) {
+    if (!socket->connect(addr))
+    {
         TIGER_LOG_E(tiger::TEST_LOG) << "[socket connnect fail errno:" << strerror(errno) << "]";
         return;
     }
     const char buffer[] = "GET / HTTP/1.0\r\n\r\n";
     ssize_t rt = socket->send(buffer, sizeof(buffer));
-    if (rt <= 0) {
+    if (rt <= 0)
+    {
         TIGER_LOG_E(tiger::TEST_LOG) << "[socket send fail connected:" << socket->is_connected()
                                      << " errno:" << strerror(errno) << "]";
         return;
@@ -26,7 +29,8 @@ void test_socket_send(const std::string &host, tiger::IOManager::ptr iom) {
     std::string buffs;
     buffs.resize(4096);
     rt = socket->recv(&buffs[0], buffs.size());
-    if (rt <= 0) {
+    if (rt <= 0)
+    {
         TIGER_LOG_E(tiger::TEST_LOG) << "socket recv fail connected:" << socket->is_connected()
                                      << " errno:" << strerror(errno) << "]";
         return;
@@ -36,7 +40,8 @@ void test_socket_send(const std::string &host, tiger::IOManager::ptr iom) {
     iom->stop();
 }
 
-int main() {
+int main()
+{
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("Socket");
     TIGER_LOG_D(tiger::TEST_LOG) << "[socket test start]";

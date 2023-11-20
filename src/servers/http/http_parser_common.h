@@ -10,15 +10,17 @@
 
 #include <sys/types.h>
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
 typedef void (*element_cb)(void *data, const char *at, size_t len);
 typedef void (*field_cb)(void *data, const char *field, size_t f_len, const char *value, size_t v_len);
 
-}  // namespace http
+} // namespace http
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

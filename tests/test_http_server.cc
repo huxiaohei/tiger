@@ -7,27 +7,30 @@
 
 #include "../src/tiger.h"
 
-class Hello : public tiger::http::Servlet {
-   public:
-    int32_t handle(tiger::http::HTTPRequest::ptr request,
-                   tiger::http::HTTPResponse::ptr response,
-                   tiger::http::HTTPSession::ptr session) override {
+class Hello : public tiger::http::Servlet
+{
+  public:
+    int32_t handle(tiger::http::HTTPRequest::ptr request, tiger::http::HTTPResponse::ptr response,
+                   tiger::http::HTTPSession::ptr session) override
+    {
         response->set_body("Hello! I'm tiger!");
         return 0;
     }
 };
 
-class Bye : public tiger::http::Servlet {
-   public:
-    int32_t handle(tiger::http::HTTPRequest::ptr request,
-                   tiger::http::HTTPResponse::ptr response,
-                   tiger::http::HTTPSession::ptr session) override {
+class Bye : public tiger::http::Servlet
+{
+  public:
+    int32_t handle(tiger::http::HTTPRequest::ptr request, tiger::http::HTTPResponse::ptr response,
+                   tiger::http::HTTPSession::ptr session) override
+    {
         response->set_body("Bye!");
         return 0;
     }
 };
 
-int main() {
+int main()
+{
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("HTTP_SERVER");
     TIGER_LOG_D(tiger::TEST_LOG) << "[http_server test start]";
@@ -42,14 +45,13 @@ int main() {
         auto dsp = server->get_servlet_dispatch();
         dsp->add_servlet("/hello", std::make_shared<Hello>());
         dsp->add_servlet("/bye", std::make_shared<Bye>());
-        dsp->add_servlet(
-            "/close", [server](tiger::http::HTTPRequest::ptr request,
-                               tiger::http::HTTPResponse::ptr response,
-                               tiger::http::HTTPSession::ptr session) {
-                server->stop();
-                tiger::IOManager::GetThreadIOM()->stop();
-                return 0;
-            });
+        dsp->add_servlet("/close",
+                         [server](tiger::http::HTTPRequest::ptr request, tiger::http::HTTPResponse::ptr response,
+                                  tiger::http::HTTPSession::ptr session) {
+                             server->stop();
+                             tiger::IOManager::GetThreadIOM()->stop();
+                             return 0;
+                         });
         server->load_certificates("./tiger.crt", "./tiger.key");
         server->start();
     });

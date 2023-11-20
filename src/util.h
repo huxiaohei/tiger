@@ -12,7 +12,8 @@
 #include <iostream>
 #include <string>
 
-namespace tiger {
+namespace tiger
+{
 
 bool IsValidName(const std::string &name);
 
@@ -20,9 +21,11 @@ time_t Millisecond();
 time_t Second();
 std::string Time2Str(time_t ts, const std::string &format);
 
-class StringUtils {
-   public:
-    static std::string Random(size_t len, const std::string chars="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+class StringUtils
+{
+  public:
+    static std::string Random(
+        size_t len, const std::string chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
     static std::string Format(const char *fmt, ...);
     static std::string Formatv(const char *fmt, va_list ap);
@@ -38,12 +41,13 @@ class StringUtils {
     static std::wstring StringToWString(const std::string &s);
 };
 
-class FSUtils {
-   public:
+class FSUtils
+{
+  public:
     static bool Unlink(const std::string &filename, bool exist = false);
     static const std::string ReadFile(const std::string &filename);
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

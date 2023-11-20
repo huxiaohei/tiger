@@ -13,11 +13,14 @@
 #include <functional>
 #include <memory>
 
-namespace tiger {
+namespace tiger
+{
 
-class Coroutine : public std::enable_shared_from_this<Coroutine> {
-   public:
-    enum State {
+class Coroutine : public std::enable_shared_from_this<Coroutine>
+{
+  public:
+    enum State
+    {
         INIT = 0b1,
         RUNNING = 0b10,
         YIELD = 0b100,
@@ -25,7 +28,7 @@ class Coroutine : public std::enable_shared_from_this<Coroutine> {
         EXCEPT = 0b10000
     };
 
-   private:
+  private:
     size_t m_id;
     std::function<void()> m_fn;
     State m_state;
@@ -33,31 +36,37 @@ class Coroutine : public std::enable_shared_from_this<Coroutine> {
     void *m_stack = nullptr;
     size_t m_stack_size = 0;
 
-   private:
+  private:
     static void Run();
 
-   public:
+  public:
     typedef std::shared_ptr<Coroutine> ptr;
 
     explicit Coroutine();
     explicit Coroutine(std::function<void()> fn, size_t stack_size = 0);
     ~Coroutine();
 
-    const size_t id() const { return m_id; }
-    const State state() const { return m_state; }
+    const size_t id() const
+    {
+        return m_id;
+    }
+    const State state() const
+    {
+        return m_state;
+    }
 
-   public:
+  public:
     void yield();
     void resume();
     bool reset(std::function<void()> fn);
 
-   public:
+  public:
     static size_t CurCoroutineId();
     static std::shared_ptr<Coroutine> GetRunningCo();
     static void Yield();
     static void Resume();
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

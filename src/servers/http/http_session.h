@@ -11,12 +11,15 @@
 #include "../../streams/socket_stream.h"
 #include "http_parser.h"
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
-class HTTPSession : public SocketStream {
-   public:
+class HTTPSession : public SocketStream
+{
+  public:
     typedef std::shared_ptr<HTTPSession> ptr;
 
     HTTPSession(Socket::ptr socket, bool owner = true);
@@ -24,8 +27,8 @@ class HTTPSession : public SocketStream {
     ssize_t send_response(HTTPResponse::ptr rsp);
 };
 
-}  // namespace http
+} // namespace http
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

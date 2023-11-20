@@ -10,25 +10,28 @@
 
 #include <memory>
 
-namespace tiger {
+namespace tiger
+{
 
-template <typename T>
-class Singleton {
-   public:
-    static T *Instance() {
+template <typename T> class Singleton
+{
+  public:
+    static T *Instance()
+    {
         static T v;
         return &v;
     }
 };
 
-template <typename T>
-class SingletonPtr {
-   public:
-    static std::shared_ptr<T> Instance() {
+template <typename T> class SingletonPtr
+{
+  public:
+    static std::shared_ptr<T> Instance()
+    {
         static std::shared_ptr<T> v(new T);
         return v;
     }
 };
 
-}  // namespace tiger
+} // namespace tiger
 #endif

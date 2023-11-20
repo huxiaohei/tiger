@@ -7,39 +7,50 @@
 
 #include "ws_server.h"
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
 WSServer::WSServer(IOManager::ptr worker, IOManager::ptr accept, std::string const &name)
-    : TCPServer(worker, accept, name) {
+    : TCPServer(worker, accept, name)
+{
     m_dispatch = std::make_shared<WSServletDispatch>("Websocket Dispatch");
 }
 
-void WSServer::handle_client(Socket::ptr client) {
+void WSServer::handle_client(Socket::ptr client)
+{
     auto session = std::make_shared<WSSession>(client);
-    do {
+    do
+    {
         HTTPRequest::ptr header = session->handle_shake();
-        if (!header) {
+        if (!header)
+        {
             TIGER_LOG_I(SYSTEM_LOG) << "[client handshake error]";
             break;
         }
         auto servlet = m_dispatch->get_ws_servlet(header->get_path());
-        if (!servlet) {
+        if (!servlet)
+        {
             TIGER_LOG_I(SYSTEM_LOG) << "[no match servlet]";
             break;
         }
         int rt = servlet->on_connect(header, session);
-        if (rt) {
+        if (rt)
+        {
             TIGER_LOG_I(SYSTEM_LOG) << "[Websocket connect error [rt:" << rt << "]]";
             break;
         }
-        while (true) {
+        while (true)
+        {
             auto msg = session->recv_message();
-            if (!msg) break;
+            if (!msg)
+                break;
             TIGER_LOG_D(SYSTEM_LOG) << "[Websocket recv messgae [" << msg->get_data() << "]]";
             rt = servlet->handle(header, msg, session);
-            if (rt) {
+            if (rt)
+            {
                 TIGER_LOG_D(SYSTEM_LOG) << "[handle rt:" << rt << "]";
                 break;
             }
@@ -49,6 +60,6 @@ void WSServer::handle_client(Socket::ptr client) {
     session->close();
 }
 
-}  // namespace http
+} // namespace http
 
-}  // namespace tiger
+} // namespace tiger

@@ -17,42 +17,51 @@
 
 #include "hook.h"
 
-namespace tiger {
+namespace tiger
+{
 
-IOManager::ptr IOManager::GetThreadIOM() {
+IOManager::ptr IOManager::GetThreadIOM()
+{
     return std::dynamic_pointer_cast<IOManager>(Scheduler::GetThreadScheduler());
 }
 
-IOManager::Context::EventContext &IOManager::Context::get_event_context(const EventStatus status) {
+IOManager::Context::EventContext &IOManager::Context::get_event_context(const EventStatus status)
+{
     return status == EventStatus::READ ? read : write;
 }
 
-void IOManager::Context::reset_event_context(EventContext &ctx) {
+void IOManager::Context::reset_event_context(EventContext &ctx)
+{
     ctx.thread_id = 0;
     ctx.co.reset();
     ctx.cb = nullptr;
     ctx.scheduler = nullptr;
 }
 
-void IOManager::Context::trigger_event(const EventStatus status) {
-    if (!(statuses & status)) {
+void IOManager::Context::trigger_event(const EventStatus status)
+{
+    if (!(statuses & status))
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[tiger_event fail"
-                                << " statuses" << statuses
-                                << " status" << status << "]";
+                                << " statuses" << statuses << " status" << status << "]";
         return;
     }
     statuses = (EventStatus)(statuses & ~status);
     EventContext &ctx = get_event_context(status);
-    if (ctx.co) {
+    if (ctx.co)
+    {
         ctx.scheduler->schedule(&ctx.co, ctx.thread_id);
-    } else {
+    }
+    else
+    {
         ctx.scheduler->schedule(&ctx.cb, ctx.thread_id);
     }
     reset_event_context(ctx);
 }
 
 IOManager::IOManager(const std::string &name, bool use_main_thread, size_t thread_cnt)
-    : Scheduler(name, use_main_thread, thread_cnt) {
+    : Scheduler(name, use_main_thread, thread_cnt)
+{
     m_epfd = epoll_create(1024);
     TIGER_ASSERT_WITH_INFO(m_epfd > 0, "[epoll_create fail]");
     int rt = pipe(m_tickle_fds);
@@ -66,38 +75,48 @@ IOManager::IOManager(const std::string &name, bool use_main_thread, size_t threa
     fd_context_resize(128);
 }
 
-IOManager::~IOManager() {
+IOManager::~IOManager()
+{
     cancel_all_timer();
     close(m_epfd);
     close(m_tickle_fds[0]);
     close(m_tickle_fds[1]);
-    for (size_t i = 0; i < m_contexts.size(); ++i) {
-        if (m_contexts[i]) delete m_contexts[i];
+    for (size_t i = 0; i < m_contexts.size(); ++i)
+    {
+        if (m_contexts[i])
+            delete m_contexts[i];
     }
 }
 
-void IOManager::open_hook() {
+void IOManager::open_hook()
+{
     enable_hook(true);
 }
 
-void IOManager::close_hook() {
+void IOManager::close_hook()
+{
     enable_hook(false);
 }
 
-void IOManager::tickle() {
-    if (has_idel_thread()) {
+void IOManager::tickle()
+{
+    if (has_idel_thread())
+    {
         int rt = write(m_tickle_fds[1], "T", 1);
         TIGER_ASSERT_WITH_INFO(rt == 1, "[write fail]");
     }
 }
 
-void IOManager::idle() {
+void IOManager::idle()
+{
     epoll_event *events = new epoll_event[256]();
     int rt = 0;
     std::vector<std::function<void()>> cbs;
-    while (true) {
+    while (true)
+    {
         rt = 0;
-        do {
+        do
+        {
             static const int EPOLL_MAX_TIMEOUT = 5000;
             time_t next_time = next_timer_left_time();
             next_time = next_time < 0 ? EPOLL_MAX_TIMEOUT : next_time;
@@ -105,14 +124,17 @@ void IOManager::idle() {
             ++m_idle_cnt;
             rt = epoll_wait(m_epfd, events, 256, (int)next_time);
             --m_idle_cnt;
-            if (rt > 0 || next_timer_left_time() <= 0 || is_stopping()) break;
+            if (rt > 0 || next_timer_left_time() <= 0 || is_stopping())
+                break;
         } while (true);
         all_expired_cbs(cbs);
         schedules(cbs.begin(), cbs.end());
         cbs.clear();
-        for (int i = 0; i < rt; ++i) {
+        for (int i = 0; i < rt; ++i)
+        {
             epoll_event &event = events[i];
-            if (event.data.fd == m_tickle_fds[0]) {
+            if (event.data.fd == m_tickle_fds[0])
+            {
                 uint8_t dummy;
                 while (read(m_tickle_fds[0], &dummy, 1) == 1)
                     continue;
@@ -120,14 +142,17 @@ void IOManager::idle() {
             }
             Context *ctx = (Context *)event.data.ptr;
             MutexLock::Lock lock(ctx->mutex);
-            if (event.events & (EPOLLERR | EPOLLHUP)) {
+            if (event.events & (EPOLLERR | EPOLLHUP))
+            {
                 event.events |= EPOLLIN | EPOLLOUT;
             }
             EventStatus real_status = EventStatus::NONE;
-            if (event.events & EPOLLIN) {
+            if (event.events & EPOLLIN)
+            {
                 real_status = EventStatus::READ;
             }
-            if (event.events & EPOLLOUT) {
+            if (event.events & EPOLLOUT)
+            {
                 real_status = EventStatus::WRITE;
             }
             if ((EventStatus)(ctx->statuses & real_status) == EventStatus::NONE)
@@ -135,29 +160,35 @@ void IOManager::idle() {
             EventStatus left_status = (EventStatus)(ctx->statuses & ~real_status);
             int op = left_status ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
             event.events = EPOLLET | left_status;
-            if (epoll_ctl(m_epfd, op, ctx->fd, &event)) {
+            if (epoll_ctl(m_epfd, op, ctx->fd, &event))
+            {
                 TIGER_LOG_E(SYSTEM_LOG) << "[epoll_ctl fail"
-                                        << " epfd:" << m_epfd
-                                        << " op:" << op
-                                        << " fd:" << ctx->fd
+                                        << " epfd:" << m_epfd << " op:" << op << " fd:" << ctx->fd
                                         << " errno:" << strerror(errno) << "]";
                 continue;
             }
-            if (real_status & EventStatus::READ) {
+            if (real_status & EventStatus::READ)
+            {
                 ctx->trigger_event(EventStatus::READ);
                 --m_appending_event_cnt;
             }
-            if (real_status & EventStatus::WRITE) {
+            if (real_status & EventStatus::WRITE)
+            {
                 ctx->trigger_event(EventStatus::WRITE);
                 --m_appending_event_cnt;
             }
         }
         {
             MutexLock::Lock lock(m_mutex);
-            if (is_stopping() && m_tasks.size() == 0) {
-                if (main_thread_id() == Thread::CurThreadId()) {
-                    if (thread_cnt() == 0) break;
-                } else {
+            if (is_stopping() && m_tasks.size() == 0)
+            {
+                if (main_thread_id() == Thread::CurThreadId())
+                {
+                    if (thread_cnt() == 0)
+                        break;
+                }
+                else
+                {
                     break;
                 }
             }
@@ -166,80 +197,91 @@ void IOManager::idle() {
     }
 }
 
-void IOManager::on_timer_refresh() {
+void IOManager::on_timer_refresh()
+{
     tickle();
 }
 
-void IOManager::fd_context_resize(size_t size) {
-    if (size <= m_contexts.size()) return;
+void IOManager::fd_context_resize(size_t size)
+{
+    if (size <= m_contexts.size())
+        return;
     m_contexts.resize(size);
-    for (size_t i = 0; i < size; ++i) {
-        if (!m_contexts[i]) {
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (!m_contexts[i])
+        {
             m_contexts[i] = new Context;
             m_contexts[i]->fd = i;
         }
     }
 }
 
-bool IOManager::add_event(int fd, EventStatus status, std::function<void()> cb) {
+bool IOManager::add_event(int fd, EventStatus status, std::function<void()> cb)
+{
     ReadWriteLock::ReadLock rlock(m_lock);
     Context *ctx = nullptr;
-    if ((int)m_contexts.size() > fd) {
+    if ((int)m_contexts.size() > fd)
+    {
         ctx = m_contexts[fd];
         rlock.unlock();
-    } else {
+    }
+    else
+    {
         rlock.unlock();
         ReadWriteLock::WriteLock wlock(m_lock);
         fd_context_resize(fd * 1.5);
         ctx = m_contexts[fd];
     }
     MutexLock::Lock mlock(ctx->mutex);
-    if (ctx->statuses & status) {
+    if (ctx->statuses & status)
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[add_event fail"
-                                << " statuses:" << ctx->statuses
-                                << " status:" << status << "]";
+                                << " statuses:" << ctx->statuses << " status:" << status << "]";
         return false;
     }
     int op = ctx->statuses ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
     epoll_event event;
     event.events = ctx->statuses | status | EPOLLET;
     event.data.ptr = ctx;
-    if (epoll_ctl(m_epfd, op, fd, &event)) {
+    if (epoll_ctl(m_epfd, op, fd, &event))
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[epoll_ctl fail"
-                                << " epfd" << m_epfd
-                                << " op" << op
-                                << " fd" << fd
-                                << " errno" << strerror(errno) << "]";
+                                << " epfd" << m_epfd << " op" << op << " fd" << fd << " errno" << strerror(errno)
+                                << "]";
         return false;
     }
     ++m_appending_event_cnt;
     ctx->statuses = (EventStatus)(ctx->statuses | status);
     auto &event_context = ctx->get_event_context(status);
     event_context.scheduler = Scheduler::GetThreadScheduler();
-    if (cb) {
+    if (cb)
+    {
         event_context.cb.swap(cb);
-    } else {
+    }
+    else
+    {
         event_context.co = Coroutine::GetRunningCo();
         event_context.thread_id = Thread::CurThreadId();
     }
     return true;
 }
 
-bool IOManager::del_event(int fd, EventStatus status) {
+bool IOManager::del_event(int fd, EventStatus status)
+{
     ReadWriteLock::ReadLock rlock(m_lock);
-    if ((int)m_contexts.size() <= fd) {
+    if ((int)m_contexts.size() <= fd)
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[del_event fail"
-                                << " fd:" << fd
-                                << " size:" << m_contexts.size() << "]";
+                                << " fd:" << fd << " size:" << m_contexts.size() << "]";
         rlock.unlock();
         return false;
     }
     auto ctx = m_contexts[fd];
-    if (!(ctx->statuses & status)) {
+    if (!(ctx->statuses & status))
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[del_event fail"
-                                << " fd:" << fd
-                                << " statuses:" << ctx->statuses
-                                << " status:" << status << "]";
+                                << " fd:" << fd << " statuses:" << ctx->statuses << " status:" << status << "]";
         rlock.unlock();
         return false;
     }
@@ -250,12 +292,11 @@ bool IOManager::del_event(int fd, EventStatus status) {
     epoll_event event;
     event.events = EPOLLET | new_status;
     event.data.ptr = ctx;
-    if (epoll_ctl(m_epfd, op, fd, &event)) {
+    if (epoll_ctl(m_epfd, op, fd, &event))
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[epoll_ctl fail"
-                                << " epfd:" << m_epfd
-                                << " op:" << op
-                                << " fd:" << fd
-                                << " errno:" << strerror(errno) << "]";
+                                << " epfd:" << m_epfd << " op:" << op << " fd:" << fd << " errno:" << strerror(errno)
+                                << "]";
         return false;
     }
     --m_appending_event_cnt;
@@ -265,21 +306,21 @@ bool IOManager::del_event(int fd, EventStatus status) {
     return true;
 }
 
-bool IOManager::cancel_event(int fd, EventStatus status) {
+bool IOManager::cancel_event(int fd, EventStatus status)
+{
     ReadWriteLock::ReadLock rlock(m_lock);
-    if ((int)m_contexts.size() <= fd) {
+    if ((int)m_contexts.size() <= fd)
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[cancel_event fail"
-                                << " fd:" << fd
-                                << " size:" << m_contexts.size() << "]";
+                                << " fd:" << fd << " size:" << m_contexts.size() << "]";
         rlock.unlock();
         return false;
     }
     auto ctx = m_contexts[fd];
-    if (!(ctx->statuses & status)) {
+    if (!(ctx->statuses & status))
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[cancel_event fail"
-                                << " fd:" << fd
-                                << " statuses:" << ctx->statuses
-                                << " status:" << status << "]";
+                                << " fd:" << fd << " statuses:" << ctx->statuses << " status:" << status << "]";
         rlock.unlock();
         return false;
     }
@@ -291,12 +332,11 @@ bool IOManager::cancel_event(int fd, EventStatus status) {
     epoll_event event;
     event.events = EPOLLET | new_status;
     event.data.ptr = ctx;
-    if (epoll_ctl(m_epfd, op, fd, &event)) {
+    if (epoll_ctl(m_epfd, op, fd, &event))
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[epoll_ctl fail"
-                                << " epfd:" << m_epfd
-                                << " op:" << op
-                                << " fd:" << fd
-                                << " errno:" << strerror(errno) << "]";
+                                << " epfd:" << m_epfd << " op:" << op << " fd:" << fd << " errno:" << strerror(errno)
+                                << "]";
         return false;
     }
     --m_appending_event_cnt;
@@ -304,37 +344,40 @@ bool IOManager::cancel_event(int fd, EventStatus status) {
     return true;
 }
 
-bool IOManager::cancel_all_event(int fd) {
+bool IOManager::cancel_all_event(int fd)
+{
     ReadWriteLock::ReadLock rlock(m_lock);
-    if ((int)m_contexts.size() <= fd) {
+    if ((int)m_contexts.size() <= fd)
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[cancel_all_event fail"
-                                << " fd:" << fd
-                                << " size:" << m_contexts.size() << "]";
+                                << " fd:" << fd << " size:" << m_contexts.size() << "]";
         rlock.unlock();
         return false;
     }
     auto ctx = m_contexts[fd];
     rlock.unlock();
-    if (!ctx->statuses) {
+    if (!ctx->statuses)
+    {
         return false;
     }
     MutexLock::Lock mlock(ctx->mutex);
     epoll_event event;
     event.events = EventStatus::NONE;
     event.data.ptr = ctx;
-    if (epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, &event)) {
+    if (epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, &event))
+    {
         TIGER_LOG_E(SYSTEM_LOG) << "[epoll_ctl fail"
-                                << " epfd:" << m_epfd
-                                << " op:" << EPOLL_CTL_DEL
-                                << " fd:" << fd
+                                << " epfd:" << m_epfd << " op:" << EPOLL_CTL_DEL << " fd:" << fd
                                 << " errno:" << strerror(errno) << "]";
         return false;
     }
-    if (ctx->statuses & EventStatus::READ) {
+    if (ctx->statuses & EventStatus::READ)
+    {
         ctx->trigger_event(EventStatus::READ);
         --m_appending_event_cnt;
     }
-    if (ctx->statuses & EventStatus::WRITE) {
+    if (ctx->statuses & EventStatus::WRITE)
+    {
         ctx->trigger_event(EventStatus::WRITE);
         --m_appending_event_cnt;
     }
@@ -342,4 +385,4 @@ bool IOManager::cancel_all_event(int fd) {
     return true;
 }
 
-}  // namespace tiger
+} // namespace tiger
