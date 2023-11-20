@@ -16,46 +16,50 @@
 
 #include "mutex.h"
 
-namespace tiger {
+namespace tiger
+{
 
-class TimerManager {
-   public:
-    class Timer {
-       private:
+class TimerManager
+{
+  public:
+    class Timer
+    {
+      private:
         friend TimerManager;
 
-       private:
+      private:
         size_t m_id;
         time_t m_interval;
         bool m_loop;
         time_t m_next_time;
         std::function<void()> m_cb;
 
-       public:
+      public:
         typedef std::shared_ptr<Timer> ptr;
 
         explicit Timer(time_t ms, bool loop, std::function<void()> cb);
 
-       public:
-        struct Comparator {
+      public:
+        struct Comparator
+        {
             bool operator()(const Timer::ptr &l, const Timer::ptr &r) const;
         };
     };
 
-   private:
+  private:
     std::set<Timer::ptr, Timer::Comparator> m_timers;
     ReadWriteLock m_lock;
 
-   protected:
+  protected:
     virtual void on_timer_refresh() = 0;
 
-   public:
+  public:
     typedef std::shared_ptr<TimerManager> ptr;
 
     TimerManager();
     virtual ~TimerManager();
 
-   public:
+  public:
     Timer::ptr add_timer(time_t interval, std::function<void()> cb, bool loop = false);
     Timer::ptr add_timer(time_t interval, std::function<void()> *cb, bool loop = false);
     Timer::ptr add_cond_timer(time_t interval, std::function<void()> cb, std::weak_ptr<void> cond, bool loop = false);
@@ -70,6 +74,6 @@ class TimerManager {
     void all_expired_cbs(std::vector<std::function<void()>> &cbs);
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

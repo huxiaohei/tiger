@@ -11,31 +11,39 @@
 #include "../tcp_server.h"
 #include "ws_servlet.h"
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
-class WSServer : public TCPServer {
-   private:
+class WSServer : public TCPServer
+{
+  private:
     WSServletDispatch::ptr m_dispatch;
 
-   public:
+  public:
     typedef std::shared_ptr<WSServer> ptr;
 
-    WSServer(IOManager::ptr worker = IOManager::GetThreadIOM(),
-             IOManager::ptr accept = IOManager::GetThreadIOM(),
+    WSServer(IOManager::ptr worker = IOManager::GetThreadIOM(), IOManager::ptr accept = IOManager::GetThreadIOM(),
              std::string const &name = "");
 
-   protected:
+  protected:
     virtual void handle_client(Socket::ptr client) override;
 
-   public:
-    WSServletDispatch::ptr get_servlet_dispatch() const { return m_dispatch; }
-    void set_servlet_dispatch(WSServletDispatch::ptr dispatch) { m_dispatch = dispatch; }
+  public:
+    WSServletDispatch::ptr get_servlet_dispatch() const
+    {
+        return m_dispatch;
+    }
+    void set_servlet_dispatch(WSServletDispatch::ptr dispatch)
+    {
+        m_dispatch = dispatch;
+    }
 };
 
-}  // namespace http
+} // namespace http
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

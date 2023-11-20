@@ -12,21 +12,23 @@
 
 #include "../bytearray.h"
 
-namespace tiger {
+namespace tiger
+{
 
-class Stream {
-   public:
+class Stream
+{
+  public:
     typedef std::shared_ptr<Stream> ptr;
 
     virtual ~Stream(){};
 
-   public:
+  public:
     virtual int read_fixed_size(void *buffer, size_t len);
     virtual int read_fixed_size(ByteArray::ptr ba, size_t len);
     virtual int write_fixed_size(const void *buffer, size_t len);
     virtual int write_fixed_size(ByteArray::ptr ba, size_t len);
 
-   public:
+  public:
     virtual int read(void *buffer, size_t len) = 0;
     virtual int read(ByteArray::ptr ba, size_t len) = 0;
     virtual int write(const void *buffer, size_t len) = 0;
@@ -34,6 +36,6 @@ class Stream {
     virtual void close() = 0;
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

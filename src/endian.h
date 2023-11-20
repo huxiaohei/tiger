@@ -14,20 +14,21 @@
 #define __TIGER_LITTLE_ENDIAN 1
 #define __TIGER_BIG_ENDIAN 2
 
-namespace tiger {
+namespace tiger
+{
 
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(uint64_t), T>::type byteswap(T value) {
+template <typename T> typename std::enable_if<sizeof(T) == sizeof(uint64_t), T>::type byteswap(T value)
+{
     return (T)bswap_64((uint64_t)value);
 }
 
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(uint32_t), T>::type byteswap(T value) {
+template <typename T> typename std::enable_if<sizeof(T) == sizeof(uint32_t), T>::type byteswap(T value)
+{
     return (T)bswap_32((uint32_t)value);
 }
 
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(uint16_t), T>::type byteswap(T value) {
+template <typename T> typename std::enable_if<sizeof(T) == sizeof(uint16_t), T>::type byteswap(T value)
+{
     return (T)bswap_16((uint16_t)value);
 }
 
@@ -39,30 +40,30 @@ typename std::enable_if<sizeof(T) == sizeof(uint16_t), T>::type byteswap(T value
 
 #if __TIGER_BYTE_ORDER == __TIGER_BIG_ENDIAN
 
-template <typename T>
-T bswap_on_little_endian(T t) {
+template <typename T> T bswap_on_little_endian(T t)
+{
     return t;
 }
 
-template <typename T>
-T bswap_on_big_endian(T t) {
+template <typename T> T bswap_on_big_endian(T t)
+{
     return byteswap(t);
 }
 
 #else
 
-template <typename T>
-T bswap_on_little_endian(T t) {
+template <typename T> T bswap_on_little_endian(T t)
+{
     return byteswap(t);
 }
 
-template <typename T>
-T bswap_on_big_endian(T t) {
+template <typename T> T bswap_on_big_endian(T t)
+{
     return t;
 }
 
 #endif
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

@@ -7,29 +7,31 @@
 
 #include "../src/servers/http/ws_server.h"
 
-class WSEchoServlet : public tiger::http::WSServlet {
-    int32_t on_connect(tiger::http::HTTPRequest::ptr header,
-                       tiger::http::WSSession::ptr session) {
+class WSEchoServlet : public tiger::http::WSServlet
+{
+    int32_t on_connect(tiger::http::HTTPRequest::ptr header, tiger::http::WSSession::ptr session)
+    {
         TIGER_LOG_D(tiger::TEST_LOG) << "[websocket connect " << session->get_remote_address() << "]";
         return 0;
     }
 
-    int32_t on_close(tiger::http::HTTPRequest::ptr header,
-                     tiger::http::WSSession::ptr session) {
+    int32_t on_close(tiger::http::HTTPRequest::ptr header, tiger::http::WSSession::ptr session)
+    {
         TIGER_LOG_D(tiger::TEST_LOG) << "[websocket close " << session->get_remote_address() << "]";
         return 0;
     }
 
-    int32_t handle(tiger::http::HTTPRequest::ptr header,
-                   tiger::http::WSFrameMessage::ptr msg,
-                   tiger::http::WSSession::ptr session) {
+    int32_t handle(tiger::http::HTTPRequest::ptr header, tiger::http::WSFrameMessage::ptr msg,
+                   tiger::http::WSSession::ptr session)
+    {
         TIGER_LOG_D(tiger::TEST_LOG) << "[websocket recv " << msg->get_data() << "]";
         session->send_message(msg->get_data());
         return 0;
     }
 };
 
-int main() {
+int main()
+{
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("WS_SERVER");
     TIGER_LOG_D(tiger::TEST_LOG) << "[ws_server test start]";

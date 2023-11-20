@@ -13,11 +13,14 @@
 #include <memory>
 #include <vector>
 
-namespace tiger {
+namespace tiger
+{
 
-class ByteArray {
-   private:
-    struct Node {
+class ByteArray
+{
+  private:
+    struct Node
+    {
         Node();
         Node(size_t s);
         ~Node();
@@ -27,7 +30,7 @@ class ByteArray {
         size_t size;
     };
 
-   private:
+  private:
     size_t m_base_size;
     size_t m_position;
     size_t m_capacity;
@@ -36,16 +39,16 @@ class ByteArray {
     Node *m_root;
     Node *m_cur;
 
-   private:
+  private:
     void add_free_capacity_to(size_t size);
 
-   public:
+  public:
     typedef std::shared_ptr<ByteArray> ptr;
 
     ByteArray(size_t base_size = 4096);
     ~ByteArray();
 
-   public:
+  public:
     void write_fixed_int8(const int8_t &v);
     void write_fixed_uint8(const uint8_t &v);
 
@@ -112,13 +115,31 @@ class ByteArray {
     std::string to_string() const;
     std::string to_hex_string() const;
 
-   public:
-    size_t get_base_size() const { return m_base_size; }
-    size_t get_position() const { return m_position; }
-    size_t get_enable_read_size() const { return m_size - m_position; }
-    size_t get_size() const { return m_size; }
-    size_t get_capacity() const { return m_capacity; }
-    size_t get_free_capacity() const { return m_capacity - m_position; }
+  public:
+    size_t get_base_size() const
+    {
+        return m_base_size;
+    }
+    size_t get_position() const
+    {
+        return m_position;
+    }
+    size_t get_enable_read_size() const
+    {
+        return m_size - m_position;
+    }
+    size_t get_size() const
+    {
+        return m_size;
+    }
+    size_t get_capacity() const
+    {
+        return m_capacity;
+    }
+    size_t get_free_capacity() const
+    {
+        return m_capacity - m_position;
+    }
 
     size_t get_enable_read_buffers(std::vector<iovec> &buffers, size_t len = ~0ull) const;
     size_t get_enable_read_buffers(std::vector<iovec> &buffers, size_t len, size_t position) const;
@@ -129,6 +150,6 @@ class ByteArray {
     void set_little_endian(bool v);
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

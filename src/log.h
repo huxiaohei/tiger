@@ -22,15 +22,17 @@
 #include "thread.h"
 #include "util.h"
 
-#define TIGER_LOG_LEVEL(logger, level)                                                                                                                                                  \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                              \
-                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Millisecond(), tiger::Thread::CurThreadName())) \
+#define TIGER_LOG_LEVEL(logger, level)                                                                                 \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                             \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(),                           \
+                            tiger::Coroutine::CurCoroutineId(), tiger::Millisecond(), tiger::Thread::CurThreadName())) \
         .ss()
 
-#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                                                                                    \
-    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                                                                                              \
-                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(), tiger::Coroutine::CurCoroutineId(), tiger::Millisecond(), tiger::Thread::CurThreadName())) \
-        .event()                                                                                                                                                                        \
+#define TIGER_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                                   \
+    tiger::LogEventWarp(std::make_shared<tiger::LogEvent>(                                                             \
+                            logger, level, __FILE__, __LINE__, tiger::Thread::CurThreadId(),                           \
+                            tiger::Coroutine::CurCoroutineId(), tiger::Millisecond(), tiger::Thread::CurThreadName())) \
+        .event()                                                                                                       \
         ->format(fmt, __VA_ARGS__);
 
 #define TIGER_LOG_DEBUG(logger) TIGER_LOG_LEVEL(logger, tiger::LogLevel::DEBUG)
@@ -43,13 +45,16 @@
 #define TIGER_LOG_FMT_WARN(logger, fmt, ...) TIGER_LOG_FMT_LEVEL(logger, tiger::LogLevel::WARN, fmt, __VA_ARGS__)
 #define TIGER_LOG_FMT_ERROR(logger, fmt, ...) TIGER_LOG_FMT_LEVEL(logger, tiger::LogLevel::ERROR, fmt, __VA_ARGS__)
 
-namespace tiger {
+namespace tiger
+{
 
 class Logger;
 
-class LogLevel {
-   public:
-    enum Level {
+class LogLevel
+{
+  public:
+    enum Level
+    {
         UNKNOW = 0,
         DEBUG = 1,
         INFO = 2,
@@ -60,33 +65,32 @@ class LogLevel {
     static const LogLevel::Level FromString(const std::string &level);
 };
 
-typedef struct {
+typedef struct
+{
     std::string type;
     LogLevel::Level level;
     std::string file;
     int interval;
-    std::string to_string() const {
+    std::string to_string() const
+    {
         std::stringstream ss;
-        ss << "[" << type << ","
-           << LogLevel::ToString(level) << ","
-           << file << ","
-           << interval << "]";
+        ss << "[" << type << "," << LogLevel::ToString(level) << "," << file << "," << interval << "]";
         return ss.str();
     }
 } AppenderDefine;
 
-typedef struct {
+typedef struct
+{
     std::string name;
     LogLevel::Level level;
     std::string formater;
     std::vector<AppenderDefine> appenders;
-    std::string to_string() const {
+    std::string to_string() const
+    {
         std::stringstream ss;
-        ss << "[\n\tname:" << name
-           << "\n\tlevel:" << level
-           << "\n\tformater:" << formater
-           << "\n\tappenders:";
-        for (auto it : appenders) {
+        ss << "[\n\tname:" << name << "\n\tlevel:" << level << "\n\tformater:" << formater << "\n\tappenders:";
+        for (auto it : appenders)
+        {
             ss << "\n\t\t" << it.to_string();
         }
         ss << "\n]";
@@ -94,8 +98,9 @@ typedef struct {
     }
 } LoggerDefine;
 
-class LogEvent {
-   private:
+class LogEvent
+{
+  private:
     std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
     const char *m_file;
@@ -106,147 +111,185 @@ class LogEvent {
     std::string m_thread_name;
     std::stringstream m_ss;
 
-   public:
+  public:
     typedef std::shared_ptr<LogEvent> ptr;
 
-    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
-             const char *file, int32_t line, uint32_t thread_id,
+    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char *file, int32_t line, uint32_t thread_id,
              uint64_t co_id, time_t time, const std::string &thread_name)
-        : m_logger(logger),
-          m_level(level),
-          m_file(file),
-          m_line(line),
-          m_thread_id(thread_id),
-          m_co_id(co_id),
-          m_time(time),
-          m_thread_name(thread_name){};
+        : m_logger(logger), m_level(level), m_file(file), m_line(line), m_thread_id(thread_id), m_co_id(co_id),
+          m_time(time), m_thread_name(thread_name){};
 
-    const std::shared_ptr<Logger> logger() { return m_logger; }
-    LogLevel::Level level() { return m_level; }
-    const char *file() { return m_file; }
-    int32_t line() { return m_line; }
-    uint32_t thread_id() { return m_thread_id; }
-    uint64_t co_id() { return m_co_id; }
-    time_t time() { return m_time; }
-    const std::string &thread_name() { return m_thread_name; }
-    std::stringstream &ss() { return m_ss; }
+    const std::shared_ptr<Logger> logger()
+    {
+        return m_logger;
+    }
+    LogLevel::Level level()
+    {
+        return m_level;
+    }
+    const char *file()
+    {
+        return m_file;
+    }
+    int32_t line()
+    {
+        return m_line;
+    }
+    uint32_t thread_id()
+    {
+        return m_thread_id;
+    }
+    uint64_t co_id()
+    {
+        return m_co_id;
+    }
+    time_t time()
+    {
+        return m_time;
+    }
+    const std::string &thread_name()
+    {
+        return m_thread_name;
+    }
+    std::stringstream &ss()
+    {
+        return m_ss;
+    }
 
-   public:
+  public:
     void format(const char *fmt, ...);
     void format(const char *fmt, va_list al);
 };
 
-class LogEventWarp {
-   private:
+class LogEventWarp
+{
+  private:
     LogEvent::ptr m_event;
 
-   public:
-    LogEventWarp(LogEvent::ptr event)
-        : m_event(event){};
+  public:
+    LogEventWarp(LogEvent::ptr event) : m_event(event){};
     ~LogEventWarp();
 
-    LogEvent::ptr event() { return m_event; }
-    std::stringstream &ss() { return m_event->ss(); }
+    LogEvent::ptr event()
+    {
+        return m_event;
+    }
+    std::stringstream &ss()
+    {
+        return m_event->ss();
+    }
 };
 
-class LogFormatter {
-   public:
-    class FormatItem {
-       protected:
+class LogFormatter
+{
+  public:
+    class FormatItem
+    {
+      protected:
         std::string m_fmt;
 
-       public:
+      public:
         typedef std::shared_ptr<FormatItem> ptr;
 
         FormatItem(const std::string &fmt = "") : m_fmt(fmt){};
         virtual ~FormatItem(){};
-        virtual void format(const std::shared_ptr<Logger> logger, std::ostream &os,
-                            LogLevel::Level level, LogEvent::ptr event) = 0;
+        virtual void format(const std::shared_ptr<Logger> logger, std::ostream &os, LogLevel::Level level,
+                            LogEvent::ptr event) = 0;
     };
 
-   private:
+  private:
     std::string m_pattern;
     std::vector<FormatItem::ptr> m_items;
 
     void init();
 
-   public:
+  public:
     typedef std::shared_ptr<LogFormatter> ptr;
 
     LogFormatter(const std::string &pattern = "");
     ~LogFormatter(){};
 
-    const std::string &pattern() { return m_pattern; }
+    const std::string &pattern()
+    {
+        return m_pattern;
+    }
 
-    std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
-                       LogEvent::ptr event);
-    std::ostream &format(std::shared_ptr<Logger> logger, std::ostream &ofs,
-                         LogLevel::Level level, LogEvent::ptr event);
+    std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
+    std::ostream &format(std::shared_ptr<Logger> logger, std::ostream &ofs, LogLevel::Level level, LogEvent::ptr event);
 };
 
-class LogAppender {
-   protected:
+class LogAppender
+{
+  protected:
     LogFormatter::ptr m_formatter;
     LogLevel::Level m_level;
     SpinLock m_lock;
 
-   public:
+  public:
     typedef std::shared_ptr<LogAppender> ptr;
 
-    LogAppender(LogFormatter::ptr formatter, LogLevel::Level level)
-        : m_formatter(formatter), m_level(level) {}
+    LogAppender(LogFormatter::ptr formatter, LogLevel::Level level) : m_formatter(formatter), m_level(level)
+    {
+    }
     virtual ~LogAppender(){};
 
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
 };
 
-class StdOutLogAppender : public LogAppender {
-   public:
+class StdOutLogAppender : public LogAppender
+{
+  public:
     typedef std::shared_ptr<StdOutLogAppender> ptr;
 
-    StdOutLogAppender(LogFormatter::ptr formatter, LogLevel::Level level)
-        : LogAppender(formatter, level){};
+    StdOutLogAppender(LogFormatter::ptr formatter, LogLevel::Level level) : LogAppender(formatter, level){};
 
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override;
 };
 
-class FileLogAppender : public LogAppender {
-   private:
+class FileLogAppender : public LogAppender
+{
+  private:
     std::string m_path;
     size_t m_interval;
     time_t m_start_time;
     time_t m_end_time;
     std::ofstream m_filestream;
 
-   private:
+  private:
     bool open_file();
 
-   public:
+  public:
     typedef std::shared_ptr<FileLogAppender> ptr;
 
-    FileLogAppender(LogFormatter::ptr formatter, LogLevel::Level level,
-                    const std::string &path, size_t interval = 7200);
+    FileLogAppender(LogFormatter::ptr formatter, LogLevel::Level level, const std::string &path,
+                    size_t interval = 7200);
 
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override;
 };
 
-class Logger : public std::enable_shared_from_this<Logger> {
-   private:
+class Logger : public std::enable_shared_from_this<Logger>
+{
+  private:
     std::string m_name;
     LogLevel::Level m_level;
     std::list<LogAppender::ptr> m_appenders;
     SpinLock m_lock;
 
-   public:
+  public:
     typedef std::shared_ptr<Logger> ptr;
 
-    Logger(const std::string &name = "ROOT", LogLevel::Level level = LogLevel::DEBUG)
-        : m_name(name), m_level(level){};
+    Logger(const std::string &name = "ROOT", LogLevel::Level level = LogLevel::DEBUG) : m_name(name), m_level(level){};
 
-    const std::string &name() const { return m_name; }
-    const LogLevel::Level level() const { return m_level; }
+    const std::string &name() const
+    {
+        return m_name;
+    }
+    const LogLevel::Level level() const
+    {
+        return m_level;
+    }
 
-   public:
+  public:
     void add_appender(LogAppender::ptr appender);
     void add_appenders(std::vector<LogAppender::ptr> appenders);
     void del_appender(LogAppender::ptr appender);
@@ -257,12 +300,13 @@ class Logger : public std::enable_shared_from_this<Logger> {
     void log(LogLevel::Level level, const LogEvent::ptr event);
 };
 
-class LoggerMgr {
-   private:
+class LoggerMgr
+{
+  private:
     std::unordered_map<std::string, Logger::ptr> m_logger_map;
     SpinLock m_lock;
 
-   public:
+  public:
     LoggerMgr();
 
     bool add_loggers(const std::string &name, const std::string &path);
@@ -274,6 +318,6 @@ class LoggerMgr {
 
 typedef Singleton<LoggerMgr> SingletonLoggerMgr;
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

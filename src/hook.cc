@@ -15,98 +15,122 @@
 #include "iomanager.h"
 #include "thread.h"
 
-namespace tiger {
+namespace tiger
+{
 
-#define HOOK_FUNC(XX) \
-    XX(sleep);        \
-    XX(usleep);       \
-    XX(nanosleep);    \
-    XX(socket);       \
-    XX(connect);      \
-    XX(accept);       \
-    XX(read);         \
-    XX(readv);        \
-    XX(recv);         \
-    XX(recvfrom);     \
-    XX(recvmsg);      \
-    XX(write);        \
-    XX(writev);       \
-    XX(send);         \
-    XX(sendto);       \
-    XX(sendmsg);      \
-    XX(close);        \
-    XX(fcntl);        \
-    XX(ioctl);        \
-    XX(getsockopt);   \
+#define HOOK_FUNC(XX)                                                                                                  \
+    XX(sleep);                                                                                                         \
+    XX(usleep);                                                                                                        \
+    XX(nanosleep);                                                                                                     \
+    XX(socket);                                                                                                        \
+    XX(connect);                                                                                                       \
+    XX(accept);                                                                                                        \
+    XX(read);                                                                                                          \
+    XX(readv);                                                                                                         \
+    XX(recv);                                                                                                          \
+    XX(recvfrom);                                                                                                      \
+    XX(recvmsg);                                                                                                       \
+    XX(write);                                                                                                         \
+    XX(writev);                                                                                                        \
+    XX(send);                                                                                                          \
+    XX(sendto);                                                                                                        \
+    XX(sendmsg);                                                                                                       \
+    XX(close);                                                                                                         \
+    XX(fcntl);                                                                                                         \
+    XX(ioctl);                                                                                                         \
+    XX(getsockopt);                                                                                                    \
     XX(setsockopt)
 
-void __init() {
+void __init()
+{
     static bool is_init = false;
-    if (is_init) return;
+    if (is_init)
+        return;
     is_init = true;
 #define XX(name) name##_f = (name##_func)dlsym(RTLD_NEXT, #name);
     HOOK_FUNC(XX);
 #undef XX
 }
 
-struct __Hook {
-    __Hook() { __init(); }
+struct __Hook
+{
+    __Hook()
+    {
+        __init();
+    }
 };
 
 static __Hook s__hook;
 
 static thread_local bool t__enable_hook = false;
 
-void enable_hook(bool hook) {
+void enable_hook(bool hook)
+{
     t__enable_hook = hook;
 }
 
-bool __enable_hook() {
+bool __enable_hook()
+{
     return t__enable_hook;
 }
 
-}  // namespace tiger
+} // namespace tiger
 
-typedef struct {
+typedef struct
+{
     bool canceled = false;
 } SocketIoState;
 
 template <typename OrgFunc, typename... Args>
-static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
-                            tiger::IOManager::EventStatus status, Args &&...args) {
-    if (!tiger::__enable_hook()) return func(fd, std::forward<Args>(args)...);
+static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name, tiger::IOManager::EventStatus status,
+                            Args &&...args)
+{
+    if (!tiger::__enable_hook())
+        return func(fd, std::forward<Args>(args)...);
     auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(fd);
-    if (!fd_entity) return func(fd, std::forward<Args>(args)...);
-    if (fd_entity->is_closed()) {
+    if (!fd_entity)
+        return func(fd, std::forward<Args>(args)...);
+    if (fd_entity->is_closed())
+    {
         errno = EBADF;
         return -1;
     }
-    if (!fd_entity->is_socket() || fd_entity->is_user_nonblock()) {
+    if (!fd_entity->is_socket() || fd_entity->is_user_nonblock())
+    {
         return func(fd, std::forward<Args>(args)...);
     }
     int timeout = -1;
-    if (status & tiger::IOManager::EventStatus::READ) {
+    if (status & tiger::IOManager::EventStatus::READ)
+    {
         timeout = fd_entity->recv_timeout();
-    } else if (status & tiger::IOManager::EventStatus::WRITE) {
+    }
+    else if (status & tiger::IOManager::EventStatus::WRITE)
+    {
         timeout = fd_entity->send_timeout();
-    } else {
+    }
+    else
+    {
         TIGER_LOG_E(tiger::SYSTEM_LOG) << "[iomanager event status not found"
-                                       << " status:" << status
-                                       << " func:" << hook_func_name << "]";
+                                       << " status:" << status << " func:" << hook_func_name << "]";
     }
     auto state = std::make_shared<SocketIoState>();
     ssize_t n = -1;
-    do {
+    do
+    {
         n = func(fd, std::forward<Args>(args)...);
-        if (n == -1 && errno == EAGAIN) {
+        if (n == -1 && errno == EAGAIN)
+        {
             auto iom = tiger::IOManager::GetThreadIOM();
             tiger::TimerManager::Timer::ptr timer;
             std::weak_ptr<SocketIoState> week_state(state);
-            if (timeout >= 0) {
+            if (timeout >= 0)
+            {
                 timer = iom->add_cond_timer(
-                    timeout, [week_state, fd, iom, status]() {
+                    timeout,
+                    [week_state, fd, iom, status]() {
                         auto _week_state = week_state.lock();
-                        if (!_week_state || _week_state->canceled) {
+                        if (!_week_state || _week_state->canceled)
+                        {
                             return;
                         }
                         _week_state->canceled = true;
@@ -114,7 +138,8 @@ static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
                     },
                     week_state, false);
             }
-            if (iom->add_event(fd, status)) {
+            if (iom->add_event(fd, status))
+            {
                 // 问题：多线程环境下，协程Yield之前事件被触发了怎么办？
                 // 解决：
                 //  1.事件触发的时候必定会在此线程中被唤醒
@@ -122,17 +147,19 @@ static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
                 //  3.在线程进入idle状态的时候，如果之前tickle过，则重置tickle状态
                 tiger::Coroutine::Yield();
                 iom->cancel_timer(timer);
-                if (state->canceled) {
+                if (state->canceled)
+                {
                     errno = ETIMEDOUT;
                     return -1;
                 }
                 state->canceled = false;
                 continue;
-            } else {
+            }
+            else
+            {
                 iom->cancel_timer(timer);
                 TIGER_LOG_E(tiger::SYSTEM_LOG) << "[iomanager add event error"
-                                               << " status:" << status
-                                               << " hookName:" << hook_func_name << "]";
+                                               << " status:" << status << " hookName:" << hook_func_name << "]";
                 return -1;
             }
         }
@@ -140,214 +167,243 @@ static ssize_t do_socket_io(int fd, OrgFunc func, const char *hook_func_name,
     return n;
 }
 
-extern "C" {
+extern "C"
+{
 
 #define XX(name) name##_func name##_f = nullptr;
-HOOK_FUNC(XX);
+    HOOK_FUNC(XX);
 #undef XX
 
-unsigned int sleep(unsigned int seconds) {
-    if (!tiger::__enable_hook()) return sleep_f(seconds);
-    pid_t t = tiger::Thread::CurThreadId();
-    auto iom = tiger::IOManager::GetThreadIOM();
-    auto co = tiger::Coroutine::GetRunningCo();
-    iom->add_timer(
-        seconds * 1000, [iom, co, t]() {
-            iom->schedule(co, t);
-        },
-        false);
-    tiger::Coroutine::Yield();
-    return 0;
-}
-
-int usleep(useconds_t usec) {
-    if (!tiger::__enable_hook()) return usleep_f(usec);
-    pid_t t = tiger::Thread::CurThreadId();
-    auto iom = tiger::IOManager::GetThreadIOM();
-    auto co = tiger::Coroutine::GetRunningCo();
-    iom->add_timer(
-        usec, [iom, co, t]() {
-            iom->schedule(co, t);
-        },
-        false);
-    tiger::Coroutine::Yield();
-    return 0;
-}
-
-int nanosleep(const struct timespec *rqtp, struct timespec *rmtp) {
-    if (!tiger::__enable_hook()) return nanosleep(rqtp, rmtp);
-    time_t usc = rqtp->tv_sec * 1000 + rqtp->tv_nsec / 10000000;
-    auto t = tiger::Thread::CurThreadId();
-    auto iom = tiger::IOManager::GetThreadIOM();
-    auto co = tiger::Coroutine::GetRunningCo();
-    iom->add_timer(
-        usc, [iom, co, t]() {
-            iom->schedule(co, t);
-        },
-        false);
-    tiger::Coroutine::Yield();
-    return 0;
-}
-
-int socket(int domain, int type, int protocol) {
-    if (!tiger::__enable_hook()) return socket_f(domain, type, protocol);
-    int fd = socket_f(domain, type, protocol);
-    if (-1 == fd) {
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "[create socket fail]";
-        return fd;
-    }
-    return tiger::SingletonFDManager::Instance()->get_fd(fd, true)->fd();
-}
-
-int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-    if (!tiger::__enable_hook()) return connect_f(sockfd, addr, addrlen);
-    auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(sockfd);
-    if (!fd_entity || fd_entity->is_closed()) {
-        TIGER_LOG_E(tiger::SYSTEM_LOG) << "[socket connect fail]";
-        errno = EBADF;
-        return -1;
-    }
-    if (!fd_entity->is_socket()) {
-        return connect_f(sockfd, addr, addrlen);
-    }
-    if (fd_entity->is_user_nonblock()) {
-        return connect_f(sockfd, addr, addrlen);
-    }
-    int n = connect_f(sockfd, addr, addrlen);
-    if (n == 0) return n;
-    if (n != -1 || errno != EINPROGRESS) return n;
-    auto iom = tiger::IOManager::GetThreadIOM();
-    auto state = std::make_shared<SocketIoState>();
-    std::weak_ptr<SocketIoState> week_state(state);
-    tiger::TimerManager::Timer::ptr timer;
-    if (fd_entity->connect_timeout() > 0) {
-        timer = iom->add_cond_timer(
-            fd_entity->connect_timeout(), [week_state, sockfd, iom]() {
-                auto _week_state = week_state.lock();
-                if (!_week_state || _week_state->canceled) return;
-                _week_state->canceled = true;
-                iom->cancel_event(sockfd, tiger::IOManager::EventStatus::WRITE);
-            },
-            week_state, false);
-    }
-    if (iom->add_event(sockfd, tiger::IOManager::EventStatus::WRITE)) {
+    unsigned int sleep(unsigned int seconds)
+    {
+        if (!tiger::__enable_hook())
+            return sleep_f(seconds);
+        pid_t t = tiger::Thread::CurThreadId();
+        auto iom = tiger::IOManager::GetThreadIOM();
+        auto co = tiger::Coroutine::GetRunningCo();
+        iom->add_timer(
+            seconds * 1000, [iom, co, t]() { iom->schedule(co, t); }, false);
         tiger::Coroutine::Yield();
-        iom->cancel_timer(timer);
-        if (state->canceled) {
-            errno = ETIMEDOUT;
+        return 0;
+    }
+
+    int usleep(useconds_t usec)
+    {
+        if (!tiger::__enable_hook())
+            return usleep_f(usec);
+        pid_t t = tiger::Thread::CurThreadId();
+        auto iom = tiger::IOManager::GetThreadIOM();
+        auto co = tiger::Coroutine::GetRunningCo();
+        iom->add_timer(
+            usec, [iom, co, t]() { iom->schedule(co, t); }, false);
+        tiger::Coroutine::Yield();
+        return 0;
+    }
+
+    int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
+    {
+        if (!tiger::__enable_hook())
+            return nanosleep(rqtp, rmtp);
+        time_t usc = rqtp->tv_sec * 1000 + rqtp->tv_nsec / 10000000;
+        auto t = tiger::Thread::CurThreadId();
+        auto iom = tiger::IOManager::GetThreadIOM();
+        auto co = tiger::Coroutine::GetRunningCo();
+        iom->add_timer(
+            usc, [iom, co, t]() { iom->schedule(co, t); }, false);
+        tiger::Coroutine::Yield();
+        return 0;
+    }
+
+    int socket(int domain, int type, int protocol)
+    {
+        if (!tiger::__enable_hook())
+            return socket_f(domain, type, protocol);
+        int fd = socket_f(domain, type, protocol);
+        if (-1 == fd)
+        {
+            TIGER_LOG_E(tiger::SYSTEM_LOG) << "[create socket fail]";
+            return fd;
+        }
+        return tiger::SingletonFDManager::Instance()->get_fd(fd, true)->fd();
+    }
+
+    int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
+    {
+        if (!tiger::__enable_hook())
+            return connect_f(sockfd, addr, addrlen);
+        auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(sockfd);
+        if (!fd_entity || fd_entity->is_closed())
+        {
+            TIGER_LOG_E(tiger::SYSTEM_LOG) << "[socket connect fail]";
+            errno = EBADF;
             return -1;
         }
-    } else {
-        iom->cancel_timer(timer);
-        state->canceled = true;
+        if (!fd_entity->is_socket())
+        {
+            return connect_f(sockfd, addr, addrlen);
+        }
+        if (fd_entity->is_user_nonblock())
+        {
+            return connect_f(sockfd, addr, addrlen);
+        }
+        int n = connect_f(sockfd, addr, addrlen);
+        if (n == 0)
+            return n;
+        if (n != -1 || errno != EINPROGRESS)
+            return n;
+        auto iom = tiger::IOManager::GetThreadIOM();
+        auto state = std::make_shared<SocketIoState>();
+        std::weak_ptr<SocketIoState> week_state(state);
+        tiger::TimerManager::Timer::ptr timer;
+        if (fd_entity->connect_timeout() > 0)
+        {
+            timer = iom->add_cond_timer(
+                fd_entity->connect_timeout(),
+                [week_state, sockfd, iom]() {
+                    auto _week_state = week_state.lock();
+                    if (!_week_state || _week_state->canceled)
+                        return;
+                    _week_state->canceled = true;
+                    iom->cancel_event(sockfd, tiger::IOManager::EventStatus::WRITE);
+                },
+                week_state, false);
+        }
+        if (iom->add_event(sockfd, tiger::IOManager::EventStatus::WRITE))
+        {
+            tiger::Coroutine::Yield();
+            iom->cancel_timer(timer);
+            if (state->canceled)
+            {
+                errno = ETIMEDOUT;
+                return -1;
+            }
+        }
+        else
+        {
+            iom->cancel_timer(timer);
+            state->canceled = true;
+        }
+        int err = 0;
+        socklen_t len = sizeof(int);
+        if (-1 == getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &err, &len))
+        {
+            return -1;
+        }
+        if (!err)
+        {
+            return 0;
+        }
+        else
+        {
+            errno = err;
+            return -1;
+        }
     }
-    int err = 0;
-    socklen_t len = sizeof(int);
-    if (-1 == getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &err, &len)) {
-        return -1;
+
+    int accept(int socket, struct sockaddr *address, socklen_t *address_len)
+    {
+        int fd = do_socket_io(socket, accept_f, "accept", tiger::IOManager::EventStatus::READ, address, address_len);
+        if (fd >= 0)
+        {
+            tiger::SingletonFDManager::Instance()->get_fd(fd, true);
+        }
+        return fd;
     }
-    if (!err) {
-        return 0;
-    } else {
-        errno = err;
-        return -1;
+
+    ssize_t read(int fildes, void *buf, size_t nbyte)
+    {
+        return do_socket_io(fildes, read_f, "read", tiger::IOManager::EventStatus::READ, buf, nbyte);
     }
-}
 
-int accept(int socket, struct sockaddr *address, socklen_t *address_len) {
-    int fd = do_socket_io(socket, accept_f, "accept",
-                          tiger::IOManager::EventStatus::READ, address, address_len);
-    if (fd >= 0) {
-        tiger::SingletonFDManager::Instance()->get_fd(fd, true);
+    ssize_t readv(int fildes, const struct iovec *iov, int iovcnt)
+    {
+        return do_socket_io(fildes, readv_f, "readv", tiger::IOManager::EventStatus::READ, iov, iovcnt);
     }
-    return fd;
-}
 
-ssize_t read(int fildes, void *buf, size_t nbyte) {
-    return do_socket_io(fildes, read_f, "read",
-                        tiger::IOManager::EventStatus::READ, buf, nbyte);
-}
+    ssize_t recv(int socket, void *buffer, size_t length, int flags)
+    {
+        return do_socket_io(socket, recv_f, "recv", tiger::IOManager::EventStatus::READ, buffer, length, flags);
+    }
 
-ssize_t readv(int fildes, const struct iovec *iov, int iovcnt) {
-    return do_socket_io(fildes, readv_f, "readv",
-                        tiger::IOManager::EventStatus::READ, iov, iovcnt);
-}
+    ssize_t recvfrom(int socket, void *buffer, size_t length, int flags, struct sockaddr *address,
+                     socklen_t *address_len)
+    {
+        return do_socket_io(socket, recvfrom_f, "recvfrom", tiger::IOManager::EventStatus::READ, buffer, length, flags,
+                            address, address_len);
+    }
 
-ssize_t recv(int socket, void *buffer, size_t length, int flags) {
-    return do_socket_io(socket, recv_f, "recv",
-                        tiger::IOManager::EventStatus::READ, buffer, length, flags);
-}
+    ssize_t recvmsg(int socket, struct msghdr *message, int flags)
+    {
+        return do_socket_io(socket, recvmsg_f, "recvmsg", tiger::IOManager::EventStatus::READ, message, flags);
+    }
 
-ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
-                 struct sockaddr *address, socklen_t *address_len) {
-    return do_socket_io(socket, recvfrom_f, "recvfrom",
-                        tiger::IOManager::EventStatus::READ, buffer, length, flags,
-                        address, address_len);
-}
+    ssize_t write(int fildes, const void *buf, size_t nbyte)
+    {
+        return do_socket_io(fildes, write_f, "write", tiger::IOManager::EventStatus::WRITE, buf, nbyte);
+    }
 
-ssize_t recvmsg(int socket, struct msghdr *message, int flags) {
-    return do_socket_io(socket, recvmsg_f, "recvmsg",
-                        tiger::IOManager::EventStatus::READ, message, flags);
-}
+    ssize_t writev(int fildes, const struct iovec *iov, int iovcnt)
+    {
+        return do_socket_io(fildes, writev_f, "writev", tiger::IOManager::EventStatus::WRITE, iov, iovcnt);
+    }
 
-ssize_t write(int fildes, const void *buf, size_t nbyte) {
-    return do_socket_io(fildes, write_f, "write",
-                        tiger::IOManager::EventStatus::WRITE, buf, nbyte);
-}
+    ssize_t send(int socket, const void *buffer, size_t length, int flags)
+    {
+        return do_socket_io(socket, send_f, "send", tiger::IOManager::EventStatus::WRITE, buffer, length, flags);
+    }
 
-ssize_t writev(int fildes, const struct iovec *iov, int iovcnt) {
-    return do_socket_io(fildes, writev_f, "writev",
-                        tiger::IOManager::EventStatus::WRITE, iov, iovcnt);
-}
+    ssize_t sendto(int socket, const void *message, size_t length, int flags, const struct sockaddr *dest_addr,
+                   socklen_t dest_len)
+    {
+        return do_socket_io(socket, sendto_f, "sendto", tiger::IOManager::EventStatus::WRITE, message, length, flags,
+                            dest_addr, dest_len);
+    }
 
-ssize_t send(int socket, const void *buffer, size_t length, int flags) {
-    return do_socket_io(socket, send_f, "send",
-                        tiger::IOManager::EventStatus::WRITE, buffer, length, flags);
-}
+    ssize_t sendmsg(int socket, const struct msghdr *message, int flags)
+    {
+        return do_socket_io(socket, sendmsg_f, "sendmsg", tiger::IOManager::EventStatus::WRITE, message, flags);
+    }
 
-ssize_t sendto(int socket, const void *message, size_t length,
-               int flags, const struct sockaddr *dest_addr,
-               socklen_t dest_len) {
-    return do_socket_io(socket, sendto_f, "sendto",
-                        tiger::IOManager::EventStatus::WRITE, message, length,
-                        flags, dest_addr, dest_len);
-}
-
-ssize_t sendmsg(int socket, const struct msghdr *message, int flags) {
-    return do_socket_io(socket, sendmsg_f, "sendmsg",
-                        tiger::IOManager::EventStatus::WRITE, message, flags);
-}
-
-int close(int fildes) {
-    if (!tiger::__enable_hook()) {
+    int close(int fildes)
+    {
+        if (!tiger::__enable_hook())
+        {
+            return close_f(fildes);
+        }
+        auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(fildes);
+        if (fd_entity)
+        {
+            auto iom = tiger::IOManager::GetThreadIOM();
+            if (iom)
+            {
+                iom->cancel_all_event(fildes);
+            }
+            tiger::SingletonFDManager::Instance()->del_fd(fildes);
+        }
         return close_f(fildes);
     }
-    auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(fildes);
-    if (fd_entity) {
-        auto iom = tiger::IOManager::GetThreadIOM();
-        if (iom) {
-            iom->cancel_all_event(fildes);
-        }
-        tiger::SingletonFDManager::Instance()->del_fd(fildes);
-    }
-    return close_f(fildes);
-}
 
-int fcntl(int fildes, int cmd, ...) {
-    va_list ap;
-    va_start(ap, cmd);
-    switch (cmd) {
+    int fcntl(int fildes, int cmd, ...)
+    {
+        va_list ap;
+        va_start(ap, cmd);
+        switch (cmd)
+        {
         case F_SETFL: {
             int arg = va_arg(ap, int);
             va_end(ap);
             auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(fildes);
-            if (!fd_entity || !fd_entity->is_socket() || fd_entity->is_closed()) {
+            if (!fd_entity || !fd_entity->is_socket() || fd_entity->is_closed())
+            {
                 return fcntl_f(fildes, cmd, arg);
             }
             fd_entity->set_user_nonblock(arg & O_NONBLOCK);
-            if (fd_entity->is_sys_nonblock()) {
+            if (fd_entity->is_sys_nonblock())
+            {
                 arg |= O_NONBLOCK;
-            } else {
+            }
+            else
+            {
                 arg &= !O_NONBLOCK;
             }
             return fcntl_f(fildes, cmd, arg);
@@ -356,12 +412,16 @@ int fcntl(int fildes, int cmd, ...) {
             va_end(ap);
             int flag = fcntl_f(fildes, cmd);
             auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(fildes);
-            if (!fd_entity || !fd_entity->is_socket() || fd_entity->is_closed()) {
+            if (!fd_entity || !fd_entity->is_socket() || fd_entity->is_closed())
+            {
                 return flag;
             }
-            if (fd_entity->is_user_nonblock()) {
+            if (fd_entity->is_user_nonblock())
+            {
                 return flag | O_NONBLOCK;
-            } else {
+            }
+            else
+            {
                 return flag & ~O_NONBLOCK;
             }
         }
@@ -412,44 +472,53 @@ int fcntl(int fildes, int cmd, ...) {
         default:
             va_end(ap);
             return fcntl_f(fildes, cmd);
-    }
-}
-
-int ioctl(int fd, unsigned long request, ...) {
-    va_list va;
-    va_start(va, request);
-    void *arg = va_arg(va, void *);
-    va_end(va);
-    if (FIONBIO == request) {
-        bool user_nonblock = !!*(int *)arg;
-        auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(fd);
-        if (!fd_entity || !fd_entity->is_socket() || fd_entity->is_closed()) {
-            return ioctl_f(fd, request, arg);
         }
-        fd_entity->set_user_nonblock(user_nonblock);
     }
-    return ioctl_f(fd, request, arg);
-}
 
-int getsockopt(int socket, int level, int option_name,
-               void *option_value, socklen_t *option_len) {
-    return getsockopt_f(socket, level, option_name, option_value, option_len);
-}
+    int ioctl(int fd, unsigned long request, ...)
+    {
+        va_list va;
+        va_start(va, request);
+        void *arg = va_arg(va, void *);
+        va_end(va);
+        if (FIONBIO == request)
+        {
+            bool user_nonblock = !!*(int *)arg;
+            auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(fd);
+            if (!fd_entity || !fd_entity->is_socket() || fd_entity->is_closed())
+            {
+                return ioctl_f(fd, request, arg);
+            }
+            fd_entity->set_user_nonblock(user_nonblock);
+        }
+        return ioctl_f(fd, request, arg);
+    }
 
-int setsockopt(int sockfd, int level, int optname,
-               const void *optval, socklen_t optlen) {
-    if (tiger::__enable_hook()) return setsockopt_f(sockfd, level, optname, optval, optlen);
-    if (level == SOL_SOCKET && (optname == SO_RCVTIMEO || optname == SO_SNDTIMEO)) {
-        auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(sockfd);
-        if (fd_entity) {
-            const timeval *v = (const timeval *)optval;
-            if (optname == SO_RCVTIMEO) {
-                fd_entity->set_recv_timeout(v->tv_sec * 1000 + v->tv_usec / 1000);
-            } else {
-                fd_entity->set_send_timeout(v->tv_sec * 1000 + v->tv_usec / 1000);
+    int getsockopt(int socket, int level, int option_name, void *option_value, socklen_t *option_len)
+    {
+        return getsockopt_f(socket, level, option_name, option_value, option_len);
+    }
+
+    int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
+    {
+        if (tiger::__enable_hook())
+            return setsockopt_f(sockfd, level, optname, optval, optlen);
+        if (level == SOL_SOCKET && (optname == SO_RCVTIMEO || optname == SO_SNDTIMEO))
+        {
+            auto fd_entity = tiger::SingletonFDManager::Instance()->get_fd(sockfd);
+            if (fd_entity)
+            {
+                const timeval *v = (const timeval *)optval;
+                if (optname == SO_RCVTIMEO)
+                {
+                    fd_entity->set_recv_timeout(v->tv_sec * 1000 + v->tv_usec / 1000);
+                }
+                else
+                {
+                    fd_entity->set_send_timeout(v->tv_sec * 1000 + v->tv_usec / 1000);
+                }
             }
         }
+        return setsockopt_f(sockfd, level, optname, optval, optlen);
     }
-    return setsockopt_f(sockfd, level, optname, optval, optlen);
-}
 }

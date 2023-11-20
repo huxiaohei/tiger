@@ -17,14 +17,18 @@
 #include "http.h"
 #include "http_parser.h"
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
-struct HTTPResult {
+struct HTTPResult
+{
     typedef std::shared_ptr<HTTPResult> ptr;
 
-    typedef enum {
+    typedef enum
+    {
         OK = 0,
         INVALID_URL = 1,
         INVALID_HOST = 2,
@@ -42,31 +46,30 @@ struct HTTPResult {
     ErrorCode err_code;
     std::string err_des;
 
-    HTTPResult(HTTPResponse::ptr _rsp,
-               ErrorCode _err_code = ErrorCode::OK,
-               const std::string &_err_des = "")
-        : rsp(_rsp), err_code(_err_code), err_des(_err_des) {}
+    HTTPResult(HTTPResponse::ptr _rsp, ErrorCode _err_code = ErrorCode::OK, const std::string &_err_des = "")
+        : rsp(_rsp), err_code(_err_code), err_des(_err_des)
+    {
+    }
 
-    std::string to_string() const {
+    std::string to_string() const
+    {
         std::stringstream ss;
-        ss << "[errCode:" << err_code
-           << " errDes:" << err_des
-           << " rsp:[\n"
-           << rsp->to_string() << "\n]]";
+        ss << "[errCode:" << err_code << " errDes:" << err_des << " rsp:[\n" << rsp->to_string() << "\n]]";
         return ss.str();
     }
 };
 
 class HTTPConnectionPool;
 
-class HTTPConnection : public SocketStream {
+class HTTPConnection : public SocketStream
+{
     friend class HTTPConnectionPool;
 
-   private:
+  private:
     uint64_t m_create_time = 0;
     uint64_t m_request = 0;
 
-   public:
+  public:
     typedef std::shared_ptr<HTTPConnection> ptr;
 
     HTTPConnection(Socket::ptr sock, bool owner = true);
@@ -75,46 +78,33 @@ class HTTPConnection : public SocketStream {
     HTTPResponse::ptr recv_response();
     int send_request(HTTPRequest::ptr req);
 
-   public:
-    static HTTPResult::ptr Get(const std::string &url,
-                               uint64_t timeout,
-                               const std::map<std::string, std::string> &headers = {},
+  public:
+    static HTTPResult::ptr Get(const std::string &url, uint64_t timeout,
+                               const std::map<std::string, std::string> &headers = {}, const std::string &body = "");
+
+    static HTTPResult::ptr Get(URI::ptr uri, uint64_t timeout, const std::map<std::string, std::string> &headers = {},
                                const std::string &body = "");
 
-    static HTTPResult::ptr Get(URI::ptr uri,
-                               uint64_t timeout,
-                               const std::map<std::string, std::string> &headers = {},
-                               const std::string &body = "");
+    static HTTPResult::ptr Post(const std::string &url, uint64_t timeout,
+                                const std::map<std::string, std::string> &headers = {}, const std::string &body = "");
 
-    static HTTPResult::ptr Post(const std::string &url,
-                                uint64_t timeout,
-                                const std::map<std::string, std::string> &headers = {},
+    static HTTPResult::ptr Post(URI::ptr uri, uint64_t timeout, const std::map<std::string, std::string> &headers = {},
                                 const std::string &body = "");
 
-    static HTTPResult::ptr Post(URI::ptr uri,
-                                uint64_t timeout,
-                                const std::map<std::string, std::string> &headers = {},
-                                const std::string &body = "");
-
-    static HTTPResult::ptr Request(HTTPMethod method,
-                                   const std::string &url,
-                                   uint64_t timeout,
+    static HTTPResult::ptr Request(HTTPMethod method, const std::string &url, uint64_t timeout,
                                    const std::map<std::string, std::string> &headers = {},
                                    const std::string &body = "");
 
-    static HTTPResult::ptr Request(HTTPMethod method,
-                                   URI::ptr uri,
-                                   uint64_t timeout,
+    static HTTPResult::ptr Request(HTTPMethod method, URI::ptr uri, uint64_t timeout,
                                    const std::map<std::string, std::string> &headers = {},
                                    const std::string &body = "");
 
-    static HTTPResult::ptr Request(HTTPRequest::ptr req,
-                                   URI::ptr uri,
-                                   uint64_t timeout);
+    static HTTPResult::ptr Request(HTTPRequest::ptr req, URI::ptr uri, uint64_t timeout);
 };
 
-class HTTPConnectionPool {
-   private:
+class HTTPConnectionPool
+{
+  private:
     std::string m_host;
     std::string m_vhost;
     bool m_is_https;
@@ -127,66 +117,44 @@ class HTTPConnectionPool {
     std::list<HTTPConnection *> m_conns;
     std::atomic<int32_t> m_total = {0};
 
-   private:
+  private:
     static void ReleasePtr(HTTPConnection *ptr, HTTPConnectionPool *pool);
 
-   public:
+  public:
     typedef std::shared_ptr<HTTPConnectionPool> ptr;
 
-    static HTTPConnectionPool::ptr Create(const std::string &uri_str,
-                                          const std::string &vhost,
-                                          uint32_t max_size,
-                                          uint32_t max_alive_time,
-                                          uint32_t max_request);
+    static HTTPConnectionPool::ptr Create(const std::string &uri_str, const std::string &vhost, uint32_t max_size,
+                                          uint32_t max_alive_time, uint32_t max_request);
 
-    HTTPConnectionPool(const std::string &host,
-                       const std::string &v_host,
-                       bool is_https,
-                       uint32_t port,
-                       uint32_t max_size,
-                       uint32_t max_alive_time,
-                       uint32_t max_request);
+    HTTPConnectionPool(const std::string &host, const std::string &v_host, bool is_https, uint32_t port,
+                       uint32_t max_size, uint32_t max_alive_time, uint32_t max_request);
 
-   public:
+  public:
     HTTPConnection::ptr get_connection();
 
-   public:
-    HTTPResult::ptr get(const std::string &path,
-                        uint64_t timeout,
-                        const std::map<std::string, std::string> &headers = {},
+  public:
+    HTTPResult::ptr get(const std::string &path, uint64_t timeout,
+                        const std::map<std::string, std::string> &headers = {}, const std::string &body = "");
+
+    HTTPResult::ptr get(URI::ptr uri, uint64_t timeout, const std::map<std::string, std::string> &headers = {},
                         const std::string &body = "");
 
-    HTTPResult::ptr get(URI::ptr uri,
-                        uint64_t timeout,
-                        const std::map<std::string, std::string> &headers = {},
-                        const std::string &body = "");
+    HTTPResult::ptr post(const std::string &path, uint64_t timeout,
+                         const std::map<std::string, std::string> &headers = {}, const std::string &body = "");
 
-    HTTPResult::ptr post(const std::string &path,
-                         uint64_t timeout,
-                         const std::map<std::string, std::string> &headers = {},
+    HTTPResult::ptr post(URI::ptr uri, uint64_t timeout, const std::map<std::string, std::string> &headers = {},
                          const std::string &body = "");
 
-    HTTPResult::ptr post(URI::ptr uri,
-                         uint64_t timeout,
-                         const std::map<std::string, std::string> &headers = {},
-                         const std::string &body = "");
+    HTTPResult::ptr request(HTTPMethod method, const std::string &path, uint64_t timeout,
+                            const std::map<std::string, std::string> &headers = {}, const std::string &body = "");
 
-    HTTPResult::ptr request(HTTPMethod method,
-                            const std::string &path,
-                            uint64_t timeout,
-                            const std::map<std::string, std::string> &headers = {},
-                            const std::string &body = "");
-
-    HTTPResult::ptr request(HTTPMethod method,
-                            URI::ptr uri,
-                            uint64_t timeout,
-                            const std::map<std::string, std::string> &headers = {},
-                            const std::string &body = "");
+    HTTPResult::ptr request(HTTPMethod method, URI::ptr uri, uint64_t timeout,
+                            const std::map<std::string, std::string> &headers = {}, const std::string &body = "");
 
     HTTPResult::ptr request(HTTPRequest::ptr req, uint64_t timeout);
 };
 
-}  // namespace http
-}  // namespace tiger
+} // namespace http
+} // namespace tiger
 
 #endif

@@ -7,20 +7,26 @@
 
 #include "../src/tiger.h"
 
-class EchoServer : public tiger::TCPServer {
-   public:
-    void handle_client(tiger::Socket::ptr client) override {
+class EchoServer : public tiger::TCPServer
+{
+  public:
+    void handle_client(tiger::Socket::ptr client) override
+    {
         TIGER_LOG_D(tiger::TEST_LOG) << "[handle client:" << client << "]";
         auto buf = std::make_shared<tiger::ByteArray>();
-        while (true) {
+        while (true)
+        {
             buf->clear();
             std::vector<iovec> iovs;
             buf->get_enable_write_buffers(iovs, 1024);
             int rt = client->recv(&iovs[0], iovs.size());
-            if (rt == 0) {
+            if (rt == 0)
+            {
                 TIGER_LOG_I(tiger::TEST_LOG) << "[has closed client:" << client << "]";
                 break;
-            } else if (rt < 0) {
+            }
+            else if (rt < 0)
+            {
                 TIGER_LOG_E(tiger::TEST_LOG) << "[client error"
                                              << " erron:" << strerror(errno) << "]";
                 break;
@@ -30,7 +36,8 @@ class EchoServer : public tiger::TCPServer {
             const std::string &msg = buf->to_string();
             TIGER_LOG_D(tiger::TEST_LOG) << "[Echo receive: " << msg << "]";
             client->send(msg.c_str(), msg.size());
-            if (msg.find("stop") == 0) {
+            if (msg.find("stop") == 0)
+            {
                 TIGER_LOG_I(tiger::TEST_LOG) << "[ECHO STOP]";
                 stop();
                 tiger::IOManager::GetThreadIOM()->stop();
@@ -39,14 +46,16 @@ class EchoServer : public tiger::TCPServer {
     }
 };
 
-void run() {
+void run()
+{
     auto addr = tiger::Address::LookupAny("0.0.0.0:8080");
     auto ech_server = std::make_shared<EchoServer>();
     ech_server->bind(addr);
     ech_server->start();
 }
 
-int main() {
+int main()
+{
     tiger::SingletonLoggerMgr::Instance()->add_loggers("tiger", "../conf/tiger.yml");
     tiger::Thread::SetName("TCPServer");
     TIGER_LOG_D(tiger::TEST_LOG) << "[tcp_server test start]";

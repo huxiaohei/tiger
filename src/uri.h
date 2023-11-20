@@ -32,10 +32,12 @@
 
 #include "address.h"
 
-namespace tiger {
+namespace tiger
+{
 
-class URI {
-   private:
+class URI
+{
+  private:
     std::string m_scheme;
     std::string m_user;
     std::string m_host;
@@ -44,35 +46,51 @@ class URI {
     std::string m_query;
     std::string m_fragment;
 
-   public:
+  public:
     typedef std::shared_ptr<URI> ptr;
 
     URI() : m_port(0){};
     static URI::ptr Create(const std::string &uri_str);
 
-   public:
-    const std::string &get_scheme() const { return m_scheme; }
-    const std::string &get_user() const { return m_user; }
-    const std::string &get_host() const { return m_host; }
-    const std::string &get_path() const {
+  public:
+    const std::string &get_scheme() const
+    {
+        return m_scheme;
+    }
+    const std::string &get_user() const
+    {
+        return m_user;
+    }
+    const std::string &get_host() const
+    {
+        return m_host;
+    }
+    const std::string &get_path() const
+    {
         static std::string s_default_path = "/";
         return m_path.empty() ? s_default_path : m_path;
     }
-    const std::string &get_query() const { return m_query; }
-    const std::string &get_fragment() const { return m_fragment; }
+    const std::string &get_query() const
+    {
+        return m_query;
+    }
+    const std::string &get_fragment() const
+    {
+        return m_fragment;
+    }
     int32_t get_port() const;
 
     bool is_default_port() const;
 
-   public:
+  public:
     Address::ptr create_address() const;
     std::string to_string() const;
 
-   public:
+  public:
     friend std::ostream &operator<<(std::ostream &os, const URI &uri);
     friend std::ostream &operator<<(std::ostream &os, const URI::ptr uri);
 };
 
-}  // namespace tiger
+} // namespace tiger
 
 #endif

@@ -7,14 +7,18 @@
 
 #include "stream.h"
 
-namespace tiger {
+namespace tiger
+{
 
-int Stream::read_fixed_size(void *buffer, size_t len) {
+int Stream::read_fixed_size(void *buffer, size_t len)
+{
     size_t offset = 0;
     int64_t left = len;
-    while (left > 0) {
+    while (left > 0)
+    {
         int64_t read_len = read((char *)buffer + offset, left);
-        if (read_len <= 0) {
+        if (read_len <= 0)
+        {
             return read_len;
         }
         offset += read_len;
@@ -23,11 +27,14 @@ int Stream::read_fixed_size(void *buffer, size_t len) {
     return len;
 }
 
-int Stream::read_fixed_size(ByteArray::ptr ba, size_t len) {
+int Stream::read_fixed_size(ByteArray::ptr ba, size_t len)
+{
     int64_t left = len;
-    while (left > 0) {
+    while (left > 0)
+    {
         int64_t read_len = read(ba, left);
-        if (read_len <= 0) {
+        if (read_len <= 0)
+        {
             return read_len;
         }
         left -= read_len;
@@ -35,12 +42,15 @@ int Stream::read_fixed_size(ByteArray::ptr ba, size_t len) {
     return len;
 }
 
-int Stream::write_fixed_size(const void *buffer, size_t len) {
+int Stream::write_fixed_size(const void *buffer, size_t len)
+{
     size_t offset = 0;
     int64_t left = len;
-    while (left > 0) {
+    while (left > 0)
+    {
         int64_t write_len = write((const char *)buffer + offset, left);
-        if (write_len <= 0) {
+        if (write_len <= 0)
+        {
             return write_len;
         }
         offset += write_len;
@@ -49,11 +59,14 @@ int Stream::write_fixed_size(const void *buffer, size_t len) {
     return len;
 }
 
-int Stream::write_fixed_size(ByteArray::ptr ba, size_t len) {
+int Stream::write_fixed_size(ByteArray::ptr ba, size_t len)
+{
     int64_t left = len;
-    while (left > 0) {
+    while (left > 0)
+    {
         int64_t write_len = write(ba, left);
-        if (len <= 0) {
+        if (len <= 0)
+        {
             return write_len;
         }
         left -= write_len;
@@ -61,4 +74,4 @@ int Stream::write_fixed_size(ByteArray::ptr ba, size_t len) {
     return len;
 }
 
-}  // namespace tiger
+} // namespace tiger

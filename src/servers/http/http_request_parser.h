@@ -10,11 +10,14 @@
 
 #include "http_parser_common.h"
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
-typedef struct {
+typedef struct
+{
     int cs;
     size_t body_start;
     int content_len;
@@ -48,8 +51,8 @@ int http_request_parser_is_finished(http_request_parser *parser);
 
 #define http_request_parser_nread(parser) (parser)->nread
 
-}  // namespace http
+} // namespace http
 
-}  // namespace tigre
+} // namespace tiger
 
 #endif

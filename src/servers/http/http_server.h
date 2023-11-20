@@ -12,32 +12,39 @@
 #include "http_servlet.h"
 #include "http_session.h"
 
-namespace tiger {
+namespace tiger
+{
 
-namespace http {
+namespace http
+{
 
-class HTTPServer : public TCPServer {
-   private:
+class HTTPServer : public TCPServer
+{
+  private:
     bool m_keepalive;
     ServletDispatch::ptr m_dispatch;
 
-   public:
+  public:
     typedef std::shared_ptr<HTTPServer> ptr;
 
-    HTTPServer(bool keepalive = false,
-               IOManager::ptr worker = IOManager::GetThreadIOM(),
-               IOManager::ptr accept = IOManager::GetThreadIOM(),
-               std::string const &name = "");
+    HTTPServer(bool keepalive = false, IOManager::ptr worker = IOManager::GetThreadIOM(),
+               IOManager::ptr accept = IOManager::GetThreadIOM(), std::string const &name = "");
 
-   public:
-    ServletDispatch::ptr get_servlet_dispatch() const { return m_dispatch; }
-    void set_servlet_dispatch(ServletDispatch::ptr v) { m_dispatch = v; }
+  public:
+    ServletDispatch::ptr get_servlet_dispatch() const
+    {
+        return m_dispatch;
+    }
+    void set_servlet_dispatch(ServletDispatch::ptr v)
+    {
+        m_dispatch = v;
+    }
 
-   protected:
+  protected:
     void handle_client(Socket::ptr client) override;
 };
 
-}  // namespace http
-}  // namespace tiger
+} // namespace http
+} // namespace tiger
 
 #endif
